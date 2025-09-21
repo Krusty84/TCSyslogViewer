@@ -2,41 +2,173 @@
 <html>
   <head>
     <title>TC Syslog Colors & Fonts</title>
-  </head>
-  <body style="font: 13px system-ui; padding: 12px; line-height: 1.6">
-    <h2>TC Syslog Colors & Fonts</h2>
-    <div id="rows"></div>
-    <div style="margin-top: 12px">
-      <label>Font family: <input id="fontFamily" value="monospace" /></label>
-      <label style="margin-left: 12px">
-        Font size (px):
-        <input id="fontSize" type="number" value="12" min="8" max="24" />
-      </label>
-    </div>
-    <button id="save" style="margin-top: 12px">Save</button>
-    <script>
-      const levels = ["INFO", "WARNING", "ERROR", "NOTE", "DEBUG", "FATAL"];
-      const rows = document.getElementById("rows");
-      for (const L of levels) {
-        const row = document.createElement("div");
-        row.innerHTML = `<label style="display:inline-block;width:90px;">${L}</label>
-          <input type="color" id="c-${L}" value="#888888">`;
-        rows.appendChild(row);
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font: 13px system-ui;
+        padding: 12px;
+        line-height: 1.6;
       }
-      document.getElementById("save").onclick = () => {
-        const values = Object.fromEntries(
-          levels.map((L) => [L, document.getElementById(`c-${L}`).value])
-        );
-        values.fontFamily = document.getElementById("fontFamily").value;
-        values.fontSize = document.getElementById("fontSize").value;
-        if (typeof acquireVsCodeApi === "function") {
-          acquireVsCodeApi().postMessage({ type: "save", values });
-        } else {
-          console.error(
-            "acquireVsCodeApi is not available. Are you running this in a VS Code Webview?"
-          );
+      h2 {
+        margin-top: 0;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 6px;
+        gap: 12px;
+      }
+      .row label {
+        width: 120px;
+      }
+      fieldset {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+      fieldset legend {
+        padding: 0 6px;
+        font-weight: 600;
+      }
+      .actions {
+        margin-top: 12px;
+        display: flex;
+        gap: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>TC Syslog Colors & Fonts</h2>
+
+    <fieldset>
+      <legend>Log Levels</legend>
+      <div id="levelRows"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Log Fields</legend>
+      <div id="tokenRows"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Typography</legend>
+      <div class="row">
+        <label for="fontFamily">Font family</label>
+        <input id="fontFamily" placeholder="monospace" />
+      </div>
+      <div class="row">
+        <label for="fontSize">Font size (px)</label>
+        <input id="fontSize" type="number" min="8" max="48" placeholder="12" />
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button id="save">Save</button>
+    </div>
+
+    <script>
+      const levelKeys = ["INFO", "WARNING", "ERROR", "NOTE", "DEBUG", "FATAL"];
+      const tokenSpecs = [
+        { key: "timestamp", label: "Timestamp" },
+        { key: "id", label: "Identifier" },
+        { key: "message", label: "Message" },
+        { key: "sqlBackground", label: "SQL Background" },
+        { key: "sqlInlineBackground", label: "Inline SQL Background" },
+        { key: "journalBackground", label: "Journal Background" }
+      ];
+      const levelDefaults = {
+        INFO: "#1479ff",
+        WARNING: "#b8860b",
+        ERROR: "#ff4242",
+        NOTE: "#3aa669",
+        DEBUG: "#888888",
+        FATAL: "#ff00aa"
+      };
+      const tokenDefaults = {
+        timestamp: "#9aa0a6",
+        id: "#c586c0",
+        message: "#d4d4d4",
+        sqlBackground: "#1f2f40",
+        sqlInlineBackground: "#24364a",
+        journalBackground: "#2d3149"
+      };
+
+      const levelContainer = document.getElementById("levelRows");
+      for (const key of levelKeys) {
+        const row = document.createElement("div");
+        row.className = "row";
+        row.innerHTML = `<label for="color-${key}">${key}</label>
+          <input type="color" id="color-${key}" value="${levelDefaults[key] || '#888888'}">`;
+        levelContainer.appendChild(row);
+      }
+
+      const tokenContainer = document.getElementById("tokenRows");
+      for (const { key, label } of tokenSpecs) {
+        const row = document.createElement("div");
+        row.className = "row";
+        row.innerHTML = `<label for="color-${key}">${label}</label>
+          <input type="color" id="color-${key}" value="${tokenDefaults[key] || '#888888'}">`;
+        tokenContainer.appendChild(row);
+      }
+
+      const vscode = typeof acquireVsCodeApi === "function" ? acquireVsCodeApi() : null;
+
+      const applyInitialValues = (payload) => {
+        if (!payload) {
+          return;
+        }
+        const levelValues = payload.levels ?? {};
+        for (const key of levelKeys) {
+          const input = document.getElementById(`color-${key}`);
+          if (input && typeof levelValues[key] === "string" && levelValues[key]) {
+            input.value = levelValues[key];
+          }
+        }
+        const tokenValues = payload.tokens ?? {};
+        for (const { key } of tokenSpecs) {
+          const input = document.getElementById(`color-${key}`);
+          if (input && typeof tokenValues[key] === "string" && tokenValues[key]) {
+            input.value = tokenValues[key];
+          }
+        }
+        if (typeof payload.fontFamily === "string") {
+          document.getElementById("fontFamily").value = payload.fontFamily;
+        }
+        if (payload.fontSize !== undefined && payload.fontSize !== null) {
+          document.getElementById("fontSize").value = payload.fontSize;
         }
       };
+
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+        if (!message) {
+          return;
+        }
+        if (message.type === "init") {
+          applyInitialValues(message.payload);
+        }
+      });
+
+      if (vscode) {
+        vscode.postMessage({ type: "ready" });
+      }
+
+      document.getElementById("save").addEventListener("click", () => {
+        const values = Object.fromEntries(
+          levelKeys.map((key) => [key, document.getElementById(`color-${key}`).value])
+        );
+        for (const { key } of tokenSpecs) {
+          values[key] = document.getElementById(`color-${key}`).value;
+        }
+        values.fontFamily = document.getElementById("fontFamily").value;
+        values.fontSize = document.getElementById("fontSize").value;
+        if (vscode) {
+          vscode.postMessage({ type: "save", values });
+        } else {
+          console.warn("VS Code API not available; nothing was saved.");
+        }
+      });
     </script>
   </body>
 </html>

@@ -3,7 +3,7 @@ import TeamcenterLogLexer from './antlr/generated/TeamcenterLogLexer.js';
 import TeamcenterLogParser from './antlr/generated/TeamcenterLogParser.js';
 import TeamcenterLogVisitor from './antlr/generated/TeamcenterLogVisitor.js';
 
-const LOG_LINE_REGEX = /^(INFO|DEBUG|NOTE|WARN|ERROR)\s*-\s*([0-9]{4}\/[0-9]{2}\/[0-9]{2}-[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?)\s+UTC\s*-\s*(.+?)\s*-\s*(.*)$/;
+const LOG_LINE_REGEX = /^(INFO|DEBUG|NOTE|WARN|ERROR|FATAL)\s*-\s*([0-9]{4}\/[0-9]{2}\/[0-9]{2}-[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?)\s+UTC\s*-\s*(.+?)\s*-\s*(.*)$/;
 const SYSTEM_INFO_PREFIXES = [
   'Node Name',
   'Machine type',
@@ -15,6 +15,52 @@ const SYSTEM_INFO_PREFIXES = [
   'Machine supports',
   'Running'
 ];
+
+const INLINE_SQL_KEYWORDS = new Set([
+  'SELECT',
+  'INSERT',
+  'UPDATE',
+  'DELETE',
+  'MERGE',
+  'WITH',
+  'TRUNCATE',
+  'CREATE',
+  'ALTER',
+  'DROP',
+  'CALL',
+  'EXEC',
+  'BEGIN',
+  'COMMIT',
+  'ROLLBACK'
+]);
+
+function isInlineSqlText(text) {
+  if (!text) {
+    return false;
+  }
+  let working = text.trim();
+  if (!working) {
+    return false;
+  }
+  const prefixMatch = working.match(/^SQL\s*[:>\-=]?\s*/i);
+  if (prefixMatch) {
+    working = working.slice(prefixMatch[0].length);
+  }
+  const tokenMatch = /^[A-Za-z]+/.exec(working);
+  if (!tokenMatch) {
+    return false;
+  }
+  const token = tokenMatch[0];
+  const upper = token.toUpperCase();
+  if (!INLINE_SQL_KEYWORDS.has(upper)) {
+    return false;
+  }
+  if (token !== upper) {
+    return false;
+  }
+  return true;
+}
+
 
 class CollectingVisitor extends TeamcenterLogVisitor {
   constructor(lines) {
@@ -31,8 +77,10 @@ class CollectingVisitor extends TeamcenterLogVisitor {
       endSessions: [],
       truncated: [],
       logLines: [],
+      inlineSqlLines: [],
       parseErrors: []
     };
+    this._sqlStack = [];
   }
 
   visitLogFile(ctx) {
@@ -94,7 +142,31 @@ class CollectingVisitor extends TeamcenterLogVisitor {
   }
 
   visitSqlDump(ctx) {
-    this.result.sqlDumps.push({ line: ctx.start.line - 1 });
+    const startLine = (ctx.start?.line ?? 1) - 1;
+    const endLine = (ctx.stop?.line ?? ctx.start?.line ?? 1) - 1;
+    const section = {
+      line: startLine,
+      endLine,
+      rows: []
+    };
+    this.result.sqlDumps.push(section);
+    this._sqlStack.push(section);
+    super.visitSqlDump(ctx);
+    this._sqlStack.pop();
+    return null;
+  }
+
+  visitSqlRow(ctx) {
+    const current = this._sqlStack[this._sqlStack.length - 1];
+    if (!current) {
+      return null;
+    }
+    const line = (ctx.start?.line ?? 1) - 1;
+    const textLine = this.lines?.[line] ?? ctx.getText();
+    current.rows.push({
+      line,
+      text: textLine
+    });
     return null;
   }
 
@@ -156,19 +228,237 @@ function collectSystemInfo(lines) {
   return entries;
 }
 
+function collectSqlSections(lines) {
+  const sections = [];
+  let index = 0;
+  while (index < lines.length) {
+    const originalLine = lines[index] ?? '';
+    const trimmed = originalLine.trim();
+    if (!trimmed.startsWith('START SQL_PROFILE_DUMP')) {
+      index += 1;
+      continue;
+    }
+
+    const section = {
+      line: index,
+      endLine: index,
+      rows: []
+    };
+
+    let cursor = index + 1;
+    let closed = false;
+    while (cursor < lines.length) {
+      const current = lines[cursor] ?? '';
+      const currentTrimmed = current.trim();
+      if (currentTrimmed.startsWith('END SQL_PROFILE_DUMP')) {
+        section.endLine = cursor;
+        cursor += 1;
+        closed = true;
+        break;
+      }
+      if (currentTrimmed &&
+          !currentTrimmed.startsWith('Nr Calls') &&
+          !/^[_-]+$/.test(currentTrimmed)) {
+        section.rows.push({
+          line: cursor,
+          text: current
+        });
+      }
+      cursor += 1;
+    }
+
+    if (!closed) {
+      section.endLine = Math.max(section.line, cursor - 1);
+    }
+    sections.push(section);
+    index = cursor;
+  }
+  return sections;
+}
+
+function collectJournalSections(lines) {
+  const sections = [];
+  const patterns = [
+    {
+      type: 'allFunctions',
+      start: /^START JOURNALLED_TIMES_IN_ALL_FUNCTIONS/i,
+      end: /^END JOURNALLED_TIMES_IN_ALL_FUNCTIONS/i
+    },
+    {
+      type: 'topLevel',
+      start: /^START JOURNALLED_TIMES_IN_TOP_LEVEL_FUNCTIONS/i,
+      end: /^END JOURNALLED_TIMES_IN_TOP_LEVEL_FUNCTIONS/i
+    },
+    {
+      type: 'summary',
+      start: /^START JOURNALLED_TIMES(?:\s|$)/i,
+      end: /^END JOURNALLED_TIMES(?:\s|$)/i
+    }
+  ];
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const rawLine = lines[i] ?? '';
+    const trimmed = rawLine.trim();
+    if (!trimmed.startsWith('START JOURNALLED_TIMES')) {
+      continue;
+    }
+    const pattern = patterns.find((item) => item.start.test(trimmed));
+    if (!pattern) {
+      continue;
+    }
+    let cursor = i + 1;
+    let endLine = i;
+    while (cursor < lines.length) {
+      const candidate = (lines[cursor] ?? '').trim();
+      if (pattern.end.test(candidate)) {
+        endLine = cursor;
+        break;
+      }
+      cursor += 1;
+    }
+    if (cursor === lines.length) {
+      endLine = Math.max(i, lines.length - 1);
+    }
+    const rows = pattern.type === 'summary'
+      ? []
+      : collectJournalRows(lines, i + 1, endLine - 1);
+    const summaryLines = [];
+    for (let j = i + 1; j <= Math.min(endLine, i + 8); j += 1) {
+      const candidate = (lines[j] ?? '').trim();
+      if (!candidate) {
+        continue;
+      }
+      if (candidate.startsWith('@*') || candidate.startsWith('START ')) {
+        continue;
+      }
+      summaryLines.push(candidate);
+      if (summaryLines.length >= 3) {
+        break;
+      }
+    }
+    sections.push({
+      type: pattern.type,
+      line: i,
+      endLine,
+      rows,
+      summary: summaryLines.join(' ').trim()
+    });
+  }
+  return sections;
+}
+
+function collectJournalRows(lines, start, end) {
+  const rows = [];
+  for (let i = start; i <= end; i += 1) {
+    const raw = lines[i] ?? '';
+    const trimmed = raw.trim();
+    if (!trimmed.startsWith('@*')) {
+      continue;
+    }
+    const body = trimmed.replace(/^@\*\s*/, '');
+    const segments = body.split(/\s{2,}/).map((segment) => segment.trim()).filter(Boolean);
+    if (!segments.length) {
+      continue;
+    }
+    const percent = segments[0] ?? null;
+    const totalElapsed = segments[1] ?? null;
+    const totalCpu = segments[2] ?? null;
+    const dbTrips = segments[3] ?? null;
+    const callCount = segments[4] ?? null;
+    const average = segments[5] ?? null;
+    const numericPercent = Number(percent);
+    if (Number.isNaN(numericPercent)) {
+      continue;
+    }
+    const functionName = (segments.length > 6
+      ? segments.slice(6).join(' ')
+      : segments[segments.length - 1])?.trim();
+    if (!functionName) {
+      continue;
+    }
+    rows.push({
+      line: i,
+      text: raw,
+      percent,
+      totalElapsed,
+      totalCpu,
+      dbTrips,
+      callCount,
+      average,
+      functionName
+    });
+  }
+  return rows;
+}
+
+function collectInlineSqlLines(lines) {
+  const matches = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const original = lines[i] ?? '';
+    const trimmed = original.trim();
+    if (!trimmed) {
+      continue;
+    }
+    if (trimmed.startsWith('START SQL_PROFILE_DUMP') || trimmed.startsWith('END SQL_PROFILE_DUMP')) {
+      continue;
+    }
+    if (isInlineSqlText(trimmed)) {
+      matches.push({ line: i, text: original });
+    }
+  }
+  return matches;
+}
+
+
+
 function collectLogLines(lines) {
   const entries = [];
   for (let i = 0; i < lines.length; i += 1) {
-    const match = LOG_LINE_REGEX.exec(lines[i]);
+    const lineText = lines[i] ?? '';
+    const match = LOG_LINE_REGEX.exec(lineText);
     if (!match) {
       continue;
     }
+
+    const levelText = match[1] ?? '';
+    const timestampText = match[2] ?? '';
+    const idRaw = match[3] ?? '';
+    const messageRaw = match[4] ?? '';
+
+    const levelStart = lineText.indexOf(levelText);
+    const levelEnd = levelStart >= 0 ? levelStart + levelText.length : levelText.length;
+
+    const timestampStart = timestampText ? lineText.indexOf(timestampText, levelEnd ?? 0) : -1;
+    const timestampEnd = timestampStart >= 0 ? timestampStart + timestampText.length : null;
+
+    const idValue = idRaw.trim();
+    const idRawIndex = idValue ? lineText.indexOf(idRaw, timestampEnd ?? 0) : -1;
+    const idLeadingSpaces = idRaw.length - idRaw.trimStart().length;
+    const idStart = idRawIndex >= 0 ? idRawIndex + idLeadingSpaces : -1;
+    const idEnd = idStart >= 0 ? idStart + idValue.length : null;
+
+    const messageValue = messageRaw.trim();
+    const messageRawIndex = messageValue ? lineText.indexOf(messageRaw, (idRawIndex >= 0 ? idRawIndex + idRaw.length : (timestampEnd ?? 0))) : -1;
+    const messageLeadingSpaces = messageRaw.length - messageRaw.trimStart().length;
+    const messageStart = messageRawIndex >= 0 ? messageRawIndex + messageLeadingSpaces : -1;
+    const messageEnd = messageStart >= 0 ? messageStart + messageValue.length : null;
+    const isInlineSql = isInlineSqlText(messageValue);
+
     entries.push({
       line: i,
-      level: match[1],
-      timestamp: match[2],
-      id: match[3].trim(),
-      message: match[4].trim()
+      level: levelText,
+      timestamp: timestampText,
+      id: idValue,
+      message: messageValue,
+      levelStart: levelStart >= 0 ? levelStart : 0,
+      levelEnd: levelEnd,
+      timestampStart: timestampStart >= 0 ? timestampStart : null,
+      timestampEnd,
+      idStart: idStart >= 0 ? idStart : null,
+      idEnd,
+      messageStart: messageStart >= 0 ? messageStart : null,
+      messageEnd,
+      isInlineSql
     });
   }
   return entries;
@@ -188,9 +478,61 @@ export function parseTeamcenterLog(content) {
   const visitor = new CollectingVisitor(lines);
   const result = tree.accept(visitor);
 
+  const heuristicSql = collectSqlSections(lines);
+  if (Array.isArray(result.sqlDumps) && result.sqlDumps.length) {
+    const heuristicsByLine = new Map(heuristicSql.map((section) => [section.line, section]));
+    const merged = result.sqlDumps.map((section) => {
+      const fallback = heuristicsByLine.get(section.line);
+      if (fallback) {
+        heuristicsByLine.delete(section.line);
+        return {
+          line: section.line ?? fallback.line,
+          endLine: section.endLine ?? fallback.endLine,
+          rows: section.rows?.length ? section.rows : fallback.rows
+        };
+      }
+      return {
+        line: section.line ?? 0,
+        endLine: section.endLine ?? section.line ?? 0,
+        rows: section.rows ?? []
+      };
+    });
+    for (const leftover of heuristicsByLine.values()) {
+      merged.push(leftover);
+    }
+    result.sqlDumps = merged;
+  } else {
+    result.sqlDumps = heuristicSql;
+  }
+
   result.header = collectHeader(lines);
   result.systemInfo = collectSystemInfo(lines);
   result.logLines = collectLogLines(lines);
+
+  const inlineLogSet = new Map();
+  for (const entry of result.logLines ?? []) {
+    if (entry?.isInlineSql) {
+      inlineLogSet.set(entry.line, entry);
+    }
+  }
+  const heuristicInline = collectInlineSqlLines(lines)
+    .filter((item) => !inlineLogSet.has(item.line));
+  result.inlineSqlLines = [
+    ...(inlineLogSet.size
+      ? Array.from(inlineLogSet.values()).map((entry) => ({
+          line: entry.line,
+          text: entry.message ?? lines[entry.line] ?? '',
+          fromLog: true,
+        }))
+      : []),
+    ...heuristicInline.map((item) => ({
+      line: item.line,
+      text: item.text,
+      fromLog: false,
+    })),
+  ].sort((a, b) => (a.line ?? 0) - (b.line ?? 0));
+
+  result.journalSections = collectJournalSections(lines);
   result.lines = lines;
 
   return result;

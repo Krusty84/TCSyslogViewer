@@ -79,7 +79,7 @@
       ]
     },
     "logLine": {
-      "begin": "^(INFO|WARN|ERROR|NOTE|DEBUG)(\\s*-\\s*)(\\d{4}\\/\\d{2}\\/\\d{2}-\\d{2}:\\d{2}:\\d{2}(?:\\.[0-9]+)?)(\\s+UTC\\s*-\\s*)([^\\s-][^-]*?)(\\s*-\\s*)",
+      "begin": "^(INFO|WARN|ERROR|NOTE|DEBUG|FATAL)(\\s*-\\s*)(\\d{4}\\/\\d{2}\\/\\d{2}-\\d{2}:\\d{2}:\\d{2}(?:\\.[0-9]+)?)(\\s+UTC\\s*-\\s*)(.+?)(\\s*-\\s*)",
       "beginCaptures": {
         "1": { "name": "constant.language.loglevel.teamcenter" },
         "2": { "name": "punctuation.separator.teamcenter" },

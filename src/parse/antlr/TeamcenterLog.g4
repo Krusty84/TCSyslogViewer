@@ -82,7 +82,7 @@ otherLine
   ;
 
 // Лексер rules
-LEVEL: 'INFO' | 'DEBUG' | 'NOTE' | 'WARN' | 'ERROR';
+LEVEL: 'INFO' | 'DEBUG' | 'NOTE' | 'WARN' | 'ERROR' | 'FATAL';
 TIMESTAMP: DIGIT DIGIT DIGIT DIGIT '/' DIGIT DIGIT '/' DIGIT DIGIT '-' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT ('.' DIGIT+)?;
 ID: 'NoID' | 'NoId' | 'InitializeModule.' [A-Z_0-9]+ | [A-Za-z0-9.]+;  // Расширил для FF22TC133.05784.tcserver00003 и т.п.
 MESSAGE: ~[\r\n]+;  // Всё до новой строки

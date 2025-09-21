@@ -18,7 +18,8 @@
     "onCommand:tcSyslog.refresh",
     "onCommand:tcSyslog.openThemePanel",
     "onView:tcSyslog.explorer",
-    "workspaceContains:**/*.syslog"
+    "workspaceContains:**/*.syslog",
+    "onLanguage:teamcenter-syslog"
   ],
   "contributes": {
     "commands": [
@@ -93,6 +94,36 @@
           "type": "number",
           "default": 12,
           "description": "Font size (px) for entry preview"
+        },
+        "tcSyslog.colors.timestamp.fg": {
+          "type": "string",
+          "default": "#9aa0a6",
+          "description": "Timestamp text color"
+        },
+        "tcSyslog.colors.id.fg": {
+          "type": "string",
+          "default": "#c586c0",
+          "description": "Identifier text color"
+        },
+        "tcSyslog.colors.message.fg": {
+          "type": "string",
+          "default": "#d4d4d4",
+          "description": "Message text color"
+        },
+        "tcSyslog.colors.sql.background": {
+          "type": "string",
+          "default": "#f8f53b7f",
+          "description": "SQL dump background color"
+        },
+        "tcSyslog.colors.sql.inline.background": {
+          "type": "string",
+          "default": "#f8f53b7f",
+          "description": "Inline SQL background color"
+        },
+        "tcSyslog.colors.journal.background": {
+          "type": "string",
+          "default": "#f8f53b7f",
+          "description": "Journalling section background color"
         }
       }
     },
