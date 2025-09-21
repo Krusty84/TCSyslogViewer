@@ -1,0 +1,101 @@
+{
+  "name": "Teamcenter Syslog",
+  "scopeName": "source.teamcenter.syslog",
+  "patterns": [
+    { "include": "#logLine" },
+    { "include": "#header" },
+    { "include": "#systemInfo" },
+    { "include": "#environment" },
+    { "include": "#dll" },
+    { "include": "#sql" }
+  ],
+  "repository": {
+    "header": {
+      "patterns": [
+        {
+          "name": "comment.block.header.teamcenter",
+          "match": "^\\*\\*\\*.*$"
+        }
+      ]
+    },
+    "systemInfo": {
+      "patterns": [
+        {
+          "name": "meta.system.info.teamcenter",
+          "begin": "^(Node Name|Machine type|OS|# Processors|Memory|Total Swap|Free  Swap|Machine supports|Running)(?=\\s)",
+          "beginCaptures": {
+            "1": { "name": "entity.name.section.teamcenter" }
+          },
+          "end": "$",
+          "patterns": [
+            {
+              "name": "meta.value.system.info.teamcenter",
+              "match": ":-?\\s*(.*)",
+              "captures": {
+                "1": { "name": "string.unquoted.value.teamcenter" }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "environment": {
+      "patterns": [
+        {
+          "name": "meta.environment.teamcenter",
+          "match": "^\\s*([A-Za-z0-9_]+)(=)(.*)$",
+          "captures": {
+            "1": { "name": "variable.other.environment.teamcenter" },
+            "2": { "name": "punctuation.separator.assignment.teamcenter" },
+            "3": { "name": "string.unquoted.value.teamcenter" }
+          }
+        }
+      ]
+    },
+    "dll": {
+      "patterns": [
+        {
+          "name": "meta.dll.entry.teamcenter",
+          "match": "^\\s*[A-Za-z]:\\\\.*$",
+          "captures": {
+            "0": { "name": "string.unquoted.dll.teamcenter" }
+          }
+        }
+      ]
+    },
+    "sql": {
+      "patterns": [
+        {
+          "name": "keyword.control.sql.teamcenter",
+          "match": "^(START|END) SQL_PROFILE_DUMP"
+        },
+        {
+          "name": "meta.sql.row.teamcenter",
+          "match": "^\\s*\\d+\\s+\\d+\\s+[0-9.]+\\s+[0-9.]+\\s+[0-9.]+\\s+(-?\\d+|\\-1)\\s+(-?\\d+|\\-1)\\s+SELECT.*$",
+          "captures": {
+            "0": { "name": "string.unquoted.sql.teamcenter" }
+          }
+        }
+      ]
+    },
+    "logLine": {
+      "begin": "^(INFO|WARN|ERROR|NOTE|DEBUG)(\\s*-\\s*)(\\d{4}\\/\\d{2}\\/\\d{2}-\\d{2}:\\d{2}:\\d{2}(?:\\.[0-9]+)?)(\\s+UTC\\s*-\\s*)([^\\s-][^-]*?)(\\s*-\\s*)",
+      "beginCaptures": {
+        "1": { "name": "constant.language.loglevel.teamcenter" },
+        "2": { "name": "punctuation.separator.teamcenter" },
+        "3": { "name": "constant.numeric.timestamp.teamcenter" },
+        "4": { "name": "punctuation.separator.teamcenter" },
+        "5": { "name": "entity.name.function.teamcenter" },
+        "6": { "name": "punctuation.separator.teamcenter" }
+      },
+      "end": "$",
+      "name": "meta.log.entry.teamcenter",
+      "patterns": [
+        {
+          "name": "string.unquoted.message.teamcenter",
+          "match": ".+"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "comments": { "lineComment": "#" },
+  "brackets": [
+    ["[", "]"],
+    ["(", ")"]
+  ],
+  "wordPattern": "(-?\\d*\\.\\d\\w*)|([^\\`\\~\\!\\@\\#\\$\\%\\^\\&\\*$begin:math:text$\\$end:math:text$\\-\\=\\+$begin:math:display$\\\\{\\$end:math:display$\\}\\\\\\|\\;\\:\\'\\\"\\,\\.\\<\\>\\/\\?\\s]+)"
+}

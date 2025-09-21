@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>TC Syslog Colors & Fonts</title>
+  </head>
+  <body style="font: 13px system-ui; padding: 12px; line-height: 1.6">
+    <h2>TC Syslog Colors & Fonts</h2>
+    <div id="rows"></div>
+    <div style="margin-top: 12px">
+      <label>Font family: <input id="fontFamily" value="monospace" /></label>
+      <label style="margin-left: 12px">
+        Font size (px):
+        <input id="fontSize" type="number" value="12" min="8" max="24" />
+      </label>
+    </div>
+    <button id="save" style="margin-top: 12px">Save</button>
+    <script>
+      const levels = ["INFO", "WARNING", "ERROR", "NOTE", "DEBUG", "FATAL"];
+      const rows = document.getElementById("rows");
+      for (const L of levels) {
+        const row = document.createElement("div");
+        row.innerHTML = `<label style="display:inline-block;width:90px;">${L}</label>
+          <input type="color" id="c-${L}" value="#888888">`;
+        rows.appendChild(row);
+      }
+      document.getElementById("save").onclick = () => {
+        const values = Object.fromEntries(
+          levels.map((L) => [L, document.getElementById(`c-${L}`).value])
+        );
+        values.fontFamily = document.getElementById("fontFamily").value;
+        values.fontSize = document.getElementById("fontSize").value;
+        if (typeof acquireVsCodeApi === "function") {
+          acquireVsCodeApi().postMessage({ type: "save", values });
+        } else {
+          console.error(
+            "acquireVsCodeApi is not available. Are you running this in a VS Code Webview?"
+          );
+        }
+      };
+    </script>
+  </body>
+</html>

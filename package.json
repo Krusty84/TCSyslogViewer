@@ -1,0 +1,127 @@
+{
+  "name": "tc-syslog-viewer",
+  "displayName": "TC Syslog Viewer",
+  "description": "Syntax color + Explorer + counters for Siemens Teamcenter syslog files.",
+  "version": "0.0.1",
+  "publisher": "your-name",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "type": "module",
+  "main": "./src/extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:tcSyslog.refresh",
+    "onCommand:tcSyslog.openThemePanel",
+    "onView:tcSyslog.explorer",
+    "workspaceContains:**/*.syslog"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "tcSyslog.refresh",
+        "title": "TC Syslog: Refresh"
+      },
+      {
+        "command": "tcSyslog.openThemePanel",
+        "title": "TC Syslog: Colors & Fonts"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "tcSyslog.explorer",
+          "name": "TC Syslog"
+        }
+      ]
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "tcSyslog.refresh",
+          "when": "true"
+        },
+        {
+          "command": "tcSyslog.openThemePanel",
+          "when": "true"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "TC Syslog Viewer",
+      "properties": {
+        "tcSyslog.colors.level.INFO.fg": {
+          "type": "string",
+          "default": "#1479ff",
+          "description": "INFO text color"
+        },
+        "tcSyslog.colors.level.WARNING.fg": {
+          "type": "string",
+          "default": "#b8860b",
+          "description": "WARNING text color"
+        },
+        "tcSyslog.colors.level.ERROR.fg": {
+          "type": "string",
+          "default": "#ff4242",
+          "description": "ERROR text color"
+        },
+        "tcSyslog.colors.level.NOTE.fg": {
+          "type": "string",
+          "default": "#3aa669",
+          "description": "NOTE text color"
+        },
+        "tcSyslog.colors.level.DEBUG.fg": {
+          "type": "string",
+          "default": "#888888",
+          "description": "DEBUG text color"
+        },
+        "tcSyslog.colors.level.FATAL.fg": {
+          "type": "string",
+          "default": "#ff00aa",
+          "description": "FATAL text color"
+        },
+        "tcSyslog.font.family": {
+          "type": "string",
+          "default": "monospace",
+          "description": "Font family for entry preview"
+        },
+        "tcSyslog.font.size": {
+          "type": "number",
+          "default": 12,
+          "description": "Font size (px) for entry preview"
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "teamcenter-syslog",
+        "aliases": [
+          "Teamcenter Syslog",
+          "teamcenter syslog"
+        ],
+        "extensions": [
+          ".syslog"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "teamcenter-syslog",
+        "scopeName": "source.teamcenter.syslog",
+        "path": "./syntaxes/teamcenter.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "compile:antlr": "antlr -Dlanguage=JavaScript -visitor -Xexact-output-dir -o src/parse/antlr/generated src/parse/antlr/TeamcenterLog.g4",
+    "watch": "node --watch src/extension.js"
+  },
+  "dependencies": {
+    "antlr4": "^4.13.1"
+  }
+}

@@ -1,0 +1,253 @@
+*** C:\Users\ADMINI~1\AppData\Local\Temp\1\tcserver.exe1644026d.syslog
+*** system log created by Administrator on Tue Dec 31 03:50:33 2024 Pacific Standard Time
+
+Node Name    :- ff22tc133
+Machine type :- x64 Level 6 Revision 09e0d
+OS           :- Windows NT 10.0 Windows Server 2016 Standard (Build 14393) 
+# Processors :- 2
+Memory       :- 19999Mb
+Total Swap   :- 22943Mb
+Free  Swap   :- 17354Mb
+Machine supports 4G address space
+Running customer environment
+INFO  - 2024/12/31-11:50:33.663 UTC - NoID - logger properties file found at C:\Siemens\tcdata\logger.properties
+INFO  - 2024/12/31-11:50:33.669 UTC - NoID - TC_VERSION_STRING=V13000.3.0.20211122.00 - Teamcenter.POM at D:/workdir/tc133w1122_64/src/foundation/pom/sss/sss_utils.cxx(480)
+INFO  - 2024/12/31-11:50:33.670 UTC - InitializeModule.LOG_ENVIRONMENT - Logging TC Environment variables: - Teamcenter.CoreModelGeneral.tcinit at D:/workdir/tc133w1122_64/src/core/tcinit/TC_Init_functions.cxx(776)
+TC environment variables:
+    TC_INDEXING_ENGINE_PASSWORD_FILE=C:\Siemens\Teamcenter13\adm_password\TC133AWC6_MBSE_solr_admin.pwf
+    TC_TRACEBACK=OFF
+    TC_DATA_MODEL=C:\Siemens\tcdata\model
+    TC_USE_KEYMANAGER=false
+    TC_INDEXING_ENGINE_USER=solr_admin
+    TC_BIN=C:\Siemens\Teamcenter13\bin
+    TC_LOGGER_CONFIGURATION=C:\Siemens\tcdata
+    TC_SHARED_MEMORY_DIR=C:\Users\ADMINI~1\AppData\Local\Temp\1
+    TC_JRE_HOME=c:\Java\jre1.8.0_202
+    TC_USER_TOOLS=C:\Siemens\Teamcenter13\local\tools
+    TC_XML_ENCODING=windows-1251
+    TC_DO_LEGACY_LOG_MESSAGE=false
+    TC_BUILD_DATE=130003020211122
+    TC_PERL_BIN=C:\Siemens\Teamcenter13\perl\bin
+    TC_DATA=C:\Siemens\tcdata
+    TC_ORIG_PATH=c:\oracle\bin;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;;C:\CLion2024.2.3\bin;
+    TC_MSG_ROOT=C:\Siemens\Teamcenter13\lang\textserver
+    TC_DB_CONNECT=infodba:quqMGpFkd4yU2Hs3tcgCHA0/Cn63qdnijw0evCmJChQ@tc
+    TC_MESSAGING_MUX_URL=http://FF22TC133:8087
+    TC_HELP_FILE=C:\Siemens\Teamcenter13\web\htdocs\tchelp\tchelp.hlp
+    TC_LOG=C:\Siemens\tcdata\log_FF22TC133_tc
+    TC_DS_HASH_ALGORITHMS=SHA256,SHA224,SHA386,SHA512
+    TC_HTDOCS=C:\Siemens\Teamcenter13\web\htdocs
+    TC_LIBRARY=C:\Siemens\Teamcenter13\lib
+    TC_CHARACTER_ENCODING_SET=Cp1251
+    TC_INCLUDE=C:\Siemens\Teamcenter13\include
+    TC_NX_DEFAULT_PART=C:\Siemens\tcdata\blank_english.prt
+    TCTP_CP=..\..\SOA/org.apache.commons.io_1.4.jar;..\..\SOA/commons-lang.jar;..\..\SOA/tctp_13000.3.0.jar;
+    TC_PRINTER=lpr.exe
+    TC_DISABLE_FLASH=true
+    TC_EXIT_FOR_POOL=1
+    TC_USE_PREFS_SHARED_MEMORY=FALSE
+    TC_USE_MGMT_CHANNEL=true
+    TC_DB_SERVER=FF22TC133
+    TC_language_default=en_US
+    TC_ROOT=C:\Siemens\Teamcenter13
+    TC_INSTALL_DIR=C:\Siemens\Teamcenter13\install
+    TC_PERL=C:\Siemens\Teamcenter13\perl\bin\perl.exe
+    POM_SCHEMA=C:\Siemens\tcdata\pom_schema_FF22TC133_tc
+    POM_TRANSMIT_DIR=C:\Siemens\tcdata\pom_transmit
+    ORA_NLS33=C:\Siemens\Teamcenter13\nls\data
+    ORACLE_SID=tc
+    TNS_ADMIN=C:\Siemens\tcdata
+    FMS_HOME=C:\Siemens\Teamcenter13\tccs
+    POM_SCHEMA=C:\Siemens\tcdata\pom_schema_FF22TC133_tc
+    API_JOURNAL=OFF
+    SPLM_LICENSE_SERVER=28000@FF22TC133
+    XBMLANGPATH=C:\Siemens\tcdata\bitmaps\%B
+    XFILESEARCHPATH=C:\Siemens\tcdata\bitmaps\%N\;C:\Siemens\tcdata\%N%S
+    XBMLANGPATH=C:\Siemens\tcdata\bitmaps\%B
+    Path=C:\Siemens\Teamcenter13\bin;c:\Java\jre1.8.0_202\bin\client;c:\Java\jre1.8.0_202\bin;c:\Java\jre1.8.0_202\bin\server;c:\oracle\bin;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;;C:\CLion2024.2.3\bin;;C:\Siemens\Teamcenter13\fsc\lib;C:\Siemens\Teamcenter13\fsc;C:\Siemens\Teamcenter13\tccs\bin;C:\Siemens\Teamcenter13\tccs\lib;C:\Siemens\Teamcenter13\tccs
+    PATHEXT=.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC
+INFO  - 2024/12/31-11:50:33.672 UTC - InitializeModule.LOG_ENVIRONMENT - Logging libraries: - Teamcenter.CoreModelGeneral.tcinit at D:/workdir/tc133w1122_64/src/core/tcinit/TC_Init_functions.cxx(819)
+=====================
+Versions of DLLs are:
+=====================
+    C:\Siemens\Teamcenter13\bin\tcserver.exe         13.3(20211122.00) 7ff6a2a40000 3c000 968e880d-4b76f792-51d18f96-9d40a4aa-1=tcserver___2021112221072199 23-Nov-2021 5:7
+    C:\Windows\SYSTEM32\ntdll.dll                    10.0.14393.4886  7ffda3aa0000 1cf000 98736197-4764b236-8225c899-78e70738-1 05-Jan-2022 11:52
+    C:\Windows\System32\KERNEL32.DLL                 10.0.14393.4886  7ffda2db0000 ad000 ccd843dd-4d81ac83-3e8f4c92-b7a4d975-1 12-Sep-2021 2:33
+    C:\Windows\System32\KERNELBASE.dll               10.0.14393.4886  7ffda01d0000 21e000 6229213f-42edf9e6-79f68aad-60da583f-1 05-Jan-2022 11:52
+    C:\Windows\System32\ucrtbase.dll                 10.0.14393.3659  7ffda0dc0000 f4000 fb16a8a3-4d860ffd-40f6a18e-f843312b-1 11-Apr-2020 4:53
+    C:\Siemens\Teamcenter13\bin\ACE.dll              6.2a_p8          7ffd73150000 16d000 b59f44d3-4dc91321-da4a7fb9-fd2ba3cd-12 11-Sep-2019 0:15
+    C:\Windows\System32\USER32.dll                   10.0.14393.0     7ffda29a0000 166000 bb7c068c-4ed2642c-d19d5eaa-319b004a-1 07-Jan-2021 23:20
+    C:\Windows\System32\win32u.dll                   10.0.14393.0     7ffda01b0000 1e000 ce777c7e-4e4322fc-6e1d7aa4-3afe1f5-1 16-Jul-2016 2:52
+    C:\Windows\System32\GDI32.dll                    10.0.14393.4169  7ffda3440000 34000 44ae0735-4f5dcfe8-d3867784-40bc024c-1 07-Jan-2021 23:23
+    C:\Windows\System32\gdi32full.dll                10.0.14393.4886  7ffda0020000 184000 3c448f86-451ba88b-38728dbb-55e2923a-1 05-Jan-2022 11:53
+    C:\Windows\System32\ADVAPI32.dll                 10.0.14393.0     7ffda39f0000 a6000 ec476b2-46178ea0-f5ed41b7-bcae05c6-1 05-Jan-2022 11:52
+    C:\Windows\System32\msvcrt.dll                   7.0.14393.2457   7ffda3950000 9e000 bafc8c0a-48e00a76-97fcc2a6-b1042ab7-1 23-Aug-2018 4:24
+    C:\Windows\System32\sechost.dll                  10.0.14393.0     7ffda3620000 5b000 ba790273-4b2f8d27-338d0c9c-48f5695a-1 05-Jan-2022 11:52
+    C:\Windows\System32\RPCRT4.dll                   10.0.14393.0     7ffda3290000 11d000 25f64ea5-4eeb171c-eb16bbac-49495cb2-1 05-Jan-2022 11:52
+    C:\Windows\System32\WS2_32.dll                   10.0.14393.0     7ffda33b0000 6a000 88345c10-4da7081e-e44299bc-6ca0cbdd-1 11-Sep-2019 4:32
+    C:\Siemens\Teamcenter13\bin\TAO_PortableServer.dll 2.2a_p8          7ffd723f0000 96000 27e96153-40d19edc-75de4697-6647eb30-8 11-Sep-2019 0:33
+    C:\Siemens\Teamcenter13\bin\TAO_IORTable.dll     2.2a_p8          7ffd9cdd0000 12000 2106fd44-450f3d5f-ea70a090-f6f858b1-2 11-Sep-2019 0:33
+    C:\Siemens\Teamcenter13\bin\TAO.dll              2.2a_p8          7ffd72490000 13c000 15587181-48681499-6878579d-bedb9aaf-d 11-Sep-2019 0:28
+    C:\Siemens\Teamcenter13\bin\libsyss.dll          tc_syss.13.20210919.00 7ffd72eb0000 29b000 9986e37a-4f043068-3e6a5898-cae79776-1=libsyss___163204693464 19-Sep-2021 10:22
+    C:\Windows\System32\ole32.dll                    10.0.14393.4651  7ffda2b10000 139000 e911fc2c-401383ee-2bbb41b7-8e1eddd9-1 12-Sep-2021 2:28
+    C:\Windows\System32\combase.dll                  10.0.14393.4651  7ffda3680000 2c6000 94e803cb-46c20542-d5c5baa0-84876d36-1 01-Feb-2022 4:25
+    C:\Windows\System32\bcryptPrimitives.dll         10.0.14393.4770  7ffda0ec0000 6c000 66fd402f-41200e2c-ce02cea9-e9489b18-1 02-Nov-2021 1:16
+    C:\Windows\System32\OLEAUT32.dll                 10.0.14393.4402  7ffda2cf0000 c0000 f7385d7b-40e6903e-b185e8b3-bd562c10-1 27-Apr-2021 5:22
+    C:\Windows\System32\msvcp_win.dll                10.0.14393.2999  7ffda0d20000 9c000 71e1ec50-43f891d7-b96e0093-80946abf-1 21-May-2019 4:1
+    C:\Windows\SYSTEM32\VCRUNTIME140.dll             14.42.34433.0    7ffd8e7a0000 1e000 38da955f-2fed8dde-da2a6319-e6a17b30-1=vcruntime140.amd64 29-Oct-2024 13:47
+    C:\Windows\SYSTEM32\MSVCP140.dll                 14.42.34433.0    7ffd8c8f0000 8d000 b0409a65-792b8dc7-84ed66e8-833af4bc-1=msvcp140.amd64 29-Oct-2024 13:47
+    C:\Siemens\Teamcenter13\bin\libpoco.dll          tc_curl.13.20201201.00 7ffd72a50000 460000 d416e0d8-43d73584-bf58c4bd-e81664c3-1=libpoco___160687451664 02-Dec-2020 2:2
+    C:\Siemens\Teamcenter13\bin\libtc.dll            13.3(20211122.00) 7ffd72630000 415000 8a5c77b8-40f32f14-df53dabe-9284c766-1=libtc___2021112218021718 23-Nov-2021 2:2
+    C:\Siemens\Teamcenter13\bin\libbase_utils.dll    13.3(20211122.00) 7ffd725d0000 5c000 a92a1fd2-43f424d2-7769068c-269fc051-1=libbase_utils___2021112216183113 23-Nov-2021 0:18
+    C:\Siemens\Teamcenter13\bin\libnls.dll           13.3(20211122.00) 7ffd9dc30000 d000 bf7ad06a-428447fe-56110a8e-528215b8-1=libnls___2021112217430807 23-Nov-2021 1:43
+    C:\Siemens\Teamcenter13\bin\libtcsan.dll         13.3(20211122.00) 7ffd9cae0000 28000 81f41f1c-44b877bc-f5fe4c8b-dcc9cf4c-1=libtcsan___2021112217431155 23-Nov-2021 1:43
+    C:\Windows\SYSTEM32\IPHLPAPI.DLL                 10.0.14393.0     7ffd9f4e0000 38000 4c53537f-44af0daa-ad62fa97-4846bc31-1 12-Jun-2018 1:33
+    C:\Windows\SYSTEM32\MSWSOCK.dll                  10.0.14393.0     7ffd9f7b0000 5d000 daa81036-4cdd7bc0-2de1bf8e-1c50eba2-1 11-Apr-2020 4:51
+    C:\Windows\SYSTEM32\NETAPI32.dll                 10.0.14393.4886  7ffd96a00000 19000 12086e99-4f7804c0-9134bb8a-e4654234-1 05-Jan-2022 11:52
+    C:\Windows\SYSTEM32\VCRUNTIME140_1.dll           14.42.34433.0    7ffd8c8e0000 c000 675d217b-c7b56b2e-5b1f9606-f1984110-1=vcruntime140_1.amd64 29-Oct-2024 13:47
+    C:\Siemens\Teamcenter13\bin\TcCrypto.dll         5.0.12           7ffd72150000 291000 5cc21e35-470bfdfe-ca93aeba-bca87207-1 14-Sep-2021 20:40
+    C:\Siemens\Teamcenter13\bin\libugmath.dll        tc_syss.13.20210919.00 7ffd720a0000 a3000 b0bf148b-439f58a4-e1852e98-877bf1ae-1=libugmath___163204701964 19-Sep-2021 10:23
+    C:\Siemens\Teamcenter13\bin\xerces322_X_19.dll                    7ffd71de0000 2bc000 0-0-0-0-0 25-Aug-2020 15:32
+    C:\Siemens\Teamcenter13\bin\TcCryptoUtil.dll     5.0.0            7ffd9cac0000 12000 56fbd9f9-4dc1f49d-57b930a3-b9d6ec02-1 14-Sep-2021 20:40
+    C:\Siemens\Teamcenter13\bin\libtcsso.dll         TcSS13.3.20211120.00 7ffd71d20000 b2000 4b9fa434-4dde7ed3-eefa8e9f-17dce789-1 21-Nov-2021 0:59
+    C:\Windows\System32\SHELL32.dll                  10.0.10586       7ffda1110000 1505000 7cc12093-4ca5160b-8102ce96-45d49973-1 01-Feb-2022 4:25
+    C:\Windows\System32\cfgmgr32.dll                 10.0.14393.0     7ffda0cd0000 42000 c85585e-422281e5-205e06a3-d413c9b6-1 16-Jul-2016 13:18
+    C:\Windows\System32\windows.storage.dll          10.0.14393.0     7ffda03f0000 6d3000 d49822d5-40b08144-2dc69887-a72858a9-1 01-Feb-2022 4:25
+    C:\Windows\System32\powrprof.dll                 10.0.14393.0     7ffd9fee0000 4c000 74b38765-4d1bbc2d-4283539e-bf9ace73-1 16-Jul-2016 13:18
+    C:\Windows\System32\shlwapi.dll                  10.0.10586       7ffda2940000 52000 5f75cef4-43365994-c5adf58e-33c5560f-1 07-Jan-2021 23:21
+    C:\Windows\System32\kernel.appcore.dll           10.0.14393.2312  7ffd9ff60000 f000 34f749b0-4c2d66cb-eee8f3a6-8a3a01b6-1 08-Jun-2018 6:37
+    C:\Windows\System32\shcore.dll                   10.0.14393.0     7ffda0f30000 a8000 1a26cb8e-4b40f6c7-a26b48d-c0c7d781-1 07-Jan-2021 23:23
+    C:\Windows\System32\profapi.dll                  10.0.14393.0     7ffd9ff30000 14000 cac4e3cc-49732e9b-1d137db1-ce8afc0e-1 16-Jul-2016 13:18
+    C:\Siemens\Teamcenter13\bin\libcxpom.dll         13.3(20211122.00) 7ffd71bf0000 123000 bb303d0a-42f139eb-e0c9cd98-48c8af7a-1=libcxpom___2021112218002477 23-Nov-2021 2:0
+    C:\Siemens\Teamcenter13\bin\libfclasses.dll      13.3(20211122.00) 7ffd71a70000 174000 4c551ff4-4fc9e662-8d26f0a9-cc9655eb-1=libfclasses___2021112218004624 23-Nov-2021 2:0
+    C:\Siemens\Teamcenter13\bin\libfoundationbase.dll 13.3(20211122.00) 7ffd976d0000 2b000 60a71902-4d7788c4-464bd8a5-aae3fa88-1=libfoundationbase___2021112217453206 23-Nov-2021 1:45
+    C:\Siemens\Teamcenter13\bin\libpom.dll           13.3(20211122.00) 7ffd71200000 868000 195bf176-49c8db41-36eb4fb1-d3c130f5-1=libpom___2021112217554610 23-Nov-2021 1:57
+    C:\Siemens\Teamcenter13\bin\libtccore.dll        13.3(20211122.00) 7ffd702b0000 f42000 96500003-48f75ead-385710a1-393195d7-1=libtccore___2021112218165988 23-Nov-2021 2:17
+    C:\Siemens\Teamcenter13\bin\TcCryptoStd.dll      5.0.0            7ffd9d6d0000 d000 1b64765e-411d8f65-c8af2cbc-c8c8720-1 14-Sep-2021 20:39
+    C:\Windows\SYSTEM32\bcrypt.dll                   10.0.14393.0     7ffd9fe20000 2b000 c66626e3-4020ed34-cb2773a8-d026bc85-1 31-Jul-2021 5:21
+    C:\Siemens\Teamcenter13\bin\icuuc67_X_19.dll     67, 1, 0, 0      7ffd700e0000 1cf000 a3aa5eba-4b13da02-9f143eb2-414c7bec-1 21-Aug-2020 16:21
+    C:\Siemens\Teamcenter13\bin\libkeymanagerclient.dll 13.3(20211122.00) 7ffd700b0000 21000 b9761d71-4ce6807f-3ce60a9d-8f1f0486-1=libkeymanagerclient___2021112216184948 23-Nov-2021 0:18
+    C:\Siemens\Teamcenter13\bin\OCI.dll              19.3.0.0         7ffd6ffd0000 d1000 0-0-0-0-0 10-Jul-2019 16:39
+    C:\Windows\SYSTEM32\ODBC32.dll                   10.0.14393.3471  7ffd6ff20000 af000 a3a8700c-4dfc845e-3f353897-e4935fb8-1 19-Dec-2019 4:14
+    C:\Siemens\Teamcenter13\bin\libtcsoacore.dll     13.3(20211122.00) 7ffd6f0b0000 e65000 9274be90-466f7b10-becee0b8-698fcad6-1=libtcsoacore___2021112218033836 23-Nov-2021 2:4
+    C:\Siemens\Teamcenter13\bin\libtcsoacorenative.dll 13.3(20211122.00) 7ffd7b780000 13000 744d92a5-46bad2a2-441011b0-5fa34b86-1=libtcsoacorenative___2021112217443846 23-Nov-2021 1:44
+    C:\Siemens\Teamcenter13\bin\TAO_AnyTypeCode.dll  2.2a_p8          7ffd6f020000 86000 641f1ec2-464e63f5-577645af-82c6ed18-5 11-Sep-2019 0:30
+    C:\Siemens\Teamcenter13\bin\icudt67_X_19.dll     67, 1, 0, 0      190b6f30000 1b17000 0-0-0-0-0 21-Aug-2020 16:41
+    C:\Siemens\Teamcenter13\bin\libtctp.dll          13.3(20211122.00) 7ffd6efb0000 67000 6f9d81a8-4f350cf4-9528b5b4-880247ea-1=libtctp___2021112215191721 22-Nov-2021 23:19
+    C:\Windows\SYSTEM32\DPAPI.dll                    10.0.14393.0     7ffd9f3a0000 a000 8d6591cd-43021032-68c8b5bf-d35bbf63-1 16-Jul-2016 13:18
+    C:\Siemens\Teamcenter13\bin\libtcsoacommon.dll   13.3(20211122.00) 7ffd6eb40000 469000 afb84605-4d148790-d64d2bac-d60b4979-1=libtcsoacommon___2021112215175612 22-Nov-2021 23:18
+    C:\Siemens\Teamcenter13\bin\libtcsoaclientmngd.dll 13.3(20211122.00) 7ffd6db60000 fdc000 792f2ba3-4c616f50-816a2a81-cf5e33d3-1=libtcsoaclientmngd___2021112216373379 23-Nov-2021 0:38
+    C:\Siemens\Teamcenter13\bin\libtccurl.dll        tc_curl.13.20210930.00 7ffd6daf0000 6f000 75b34d02-4dda2ad0-e448878c-e6cfc8a3-1=libtccurl___163308502064 01-Oct-2021 10:43
+    C:\Siemens\Teamcenter13\bin\TcMemCppBindingv16064.dll fms.13.3.20211014.00 7ffd6dab0000 31000 f2aca440-41572ee2-71ffba8a-892805b1-1 14-Oct-2021 6:7
+    C:\Siemens\Teamcenter13\bin\TcMemBindingv16064.dll fms.13.3.20211014.00 7ffd79d40000 11000 2007de3f-443f3a09-bcee679d-bb2f847a-1 14-Oct-2021 6:28
+    C:\Windows\System32\IMM32.DLL                    10.0.14393.0     7ffda26a0000 2e000 e0f6eaf8-4c9fd5ed-59705c91-2b529868-1 16-Jul-2016 13:18
+    C:\Siemens\Teamcenter13\bin\libmetaframework.dll 13.3(20211122.00) 7ffd6d910000 191000 fd1d3049-4f48a45a-71880087-36e649dd-1=libmetaframework___2021112218005224 23-Nov-2021 2:0
+    C:\Siemens\Teamcenter13\bin\libtcsoaserver.dll   13.3(20211122.00) 7ffd6d640000 2c7000 bf59ae1-492ea14e-64e77a5-4f390908-1=libtcsoaserver___2021112218121635 23-Nov-2021 2:12
+    C:\Windows\system32\napinsp.dll                  10.0.14393.0     7ffd8d5a0000 16000 6a1e2dd8-4b0b84d2-1a44898f-3c679386-1 16-Jul-2016 13:18
+    C:\Windows\SYSTEM32\DNSAPI.dll                   10.0.14393.0     7ffd9f520000 a2000 5c6526f8-48784e6c-6bb2ccb0-a464e5a6-1 08-Apr-2021 8:8
+    C:\Windows\System32\NSI.dll                      10.0.14393.3297  7ffda2690000 8000 8d9a83e0-43a03ac8-29734d9a-c68691eb-1 01-Oct-2019 21:25
+    C:\Windows\System32\winrnr.dll                   10.0.14393.0     7ffd8d590000 e000 a497f69e-41f21b7a-f39f88e-7ab43a83-1 16-Jul-2016 13:18
+    C:\Windows\system32\NLAapi.dll                   10.0.14393.3808  7ffd9a440000 18000 1478a603-4c59ada3-96bd1b81-d41f4740-1 08-Jul-2020 6:50
+    C:\Siemens\Teamcenter13\bin\libinternal_exits.dll 13.3(20211122.00) 7ffd9cdc0000 e000 25a9982b-4cca4e69-2aff0098-6d8c50c3-1=libinternal_exits___2021112218055420 23-Nov-2021 2:5
+    C:\Siemens\Teamcenter13\bin\libtcinit.dll        13.3(20211122.00) 7ffd75370000 18000 6a5dc6e6-45d0666b-46c4148b-b5d3381c-1=libtcinit___2021112218082890 23-Nov-2021 2:8
+    C:\Siemens\Teamcenter13\bin\libfoundationdispatch.dll 13.3(20211122.00) 7ffd6d2e0000 352000 8c25f939-4820c488-ddf6a195-a84e1eac-1=libfoundationdispatch___2021112218265554 23-Nov-2021 2:27
+    C:\Siemens\Teamcenter13\bin\libFnd0TxnMonitor.dll 13.3(20211122.00) 7ffd6d260000 7e000 1c4e79ee-4dd5bc66-eda866b4-939918a6-1=libFnd0TxnMonitor___2021112218211444 23-Nov-2021 2:21
+    C:\Siemens\Teamcenter13\bin\libmld.dll           13.3(20211122.00) 7ffd6d140000 11a000 1e5bed40-448d0ec3-10d8d486-2fd8745c-1=libmld___2021112217135848 23-Nov-2021 1:14
+    C:\Siemens\Teamcenter13\bin\libss.dll            13.3(20211122.00) 7ffd6d110000 2d000 51aff846-41e32d5d-ab967c84-dfadce2e-1=libss___2021112218030533 23-Nov-2021 2:3
+    C:\Windows\SYSTEM32\VERSION.dll                  10.0.14393.0     7ffd8e760000 a000 1257805-4ffb1c4e-9dcf1f99-3c14d565-1 16-Jul-2016 13:18
+    C:\Windows\SYSTEM32\MPR.dll                      10.0.14393.0     7ffd963e0000 1b000 2ea97e7f-44bb5e58-867038b8-e4d95d8d-1 14-Mar-2019 6:37
+    C:\Windows\SYSTEM32\SspiCli.dll                  10.0.14393.4704  7ffd9fb50000 2c000 22198c01-41a887de-6b894081-3a5cc33e-1 05-Oct-2021 5:59
+    C:\Windows\System32\PSAPI.DLL                    10.0.14393.0     7ffda2930000 8000 aeda310d-406a7062-25ce6f98-6c5006c5-1 16-Jul-2016 13:18
+
+INFO  - 2024/12/31-11:50:33.687 UTC - InitializeModule.POM - library libsa is delay loaded - Teamcenter.Metamodel.MetaFrameWork at D:/workdir/tc133w1122_64/src/core/metaframework/BusinessObjectRegistryImpl.cxx(2728)
+INFO  - 2024/12/31-11:50:33.687 UTC - InitializeModule.POM - POM V10.0.1.0  compiled on Nov 22 2021 - Teamcenter.POM at D:/workdir/tc133w1122_64/src/foundation/pom/pom/pom_init.cxx(485)
+INFO  - 2024/12/31-11:50:33.687 UTC - InitializeModule.POM - Compiled:  -D__OCI  -D__ODBC  - Teamcenter.POM at D:/workdir/tc133w1122_64/src/foundation/pom/pom/pom_init.cxx(495)
+Session is running in codeset 1251 14
+INFO  - 2024/12/31-11:50:33.692 UTC - InitializeModule.POM - Default encryption configuration. - Teamcenter.FoundationBase at D:/workdir/tc133w1122_64/src/foundation/base/KeyManagerTcCrypto.cxx(138)
+Encoding=cl8mswin1251.
+Defaulted NLS_LANG based upon TEXT encoding.
+  Oracle env: NLS_LANG=american_america.cl8mswin1251.
+  Oracle env: NLS_SORT=BINARY.
+**** Connected to 'tc' as 'infodba'
+DBMS Version Information:
+ DBMS VERSION:: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+ DBMS VERSION:: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+POM_Parameter contents: Parameter = 'Value' (Status):
+POM_INTERNAL_WHO_CLOSED_POM    = '2023/05/07 04:45:42 Administrator/infodba 00001a08:00001a0c ff22tc133 2305070441\business_model_updater1a084f7d.syslog' (Cached)
+POM_INTERNAL_WHO_LOCKED_SCHEMA = '2022/01/23 23:56:44 Administrator/infodba 00001f00:00001f50 ff22tc133 2201232352\business_model_updater1f001d96.syslog' (Cached)
+INFO  - 2024/12/31-11:50:34.045 UTC - InitializeModule.POM - ORACLE:: Setting _b_tree_bitmap_plans to false - Teamcenter.POM at D:/workdir/tc133w1122_64/src/foundation/pom/eim/eim_trans_util.cxx(2180)
+INFO  - 2024/12/31-11:50:34.076 UTC - InitializeModule.POM - Default encryption configuration. - Teamcenter.FoundationBase at D:/workdir/tc133w1122_64/src/foundation/base/KeyManagerTcCrypto.cxx(138)
+INFO  - 2024/12/31-11:50:34.093 UTC - InitializeModule.POM - Database Installation Identifier: "TEAMCENTER V13000.3.0.20211122" info=00000001 - Teamcenter.POM at D:/workdir/tc133w1122_64/src/foundation/pom/dds/dds_schemas.cxx(2833)
+INFO  - 2024/12/31-11:50:34.093 UTC - InitializeModule.POM - LOADING SCHEMA FILE: C:\Siemens\tcdata\pom_schema_FF22TC133_tc - Teamcenter.POM at D:/workdir/tc133w1122_64/src/foundation/pom/dds/dds_schemas.cxx(3059)
+INFO  - 2024/12/31-11:50:34.236 UTC - InitializeModule.POM - Database Schema Cache Information: - Teamcenter.POM at D:/workdir/tc133w1122_64/src/foundation/pom/dds/dds_io.cxx(911)
+D:/workdir/tc133w1122_64/src/foundation/pom/dds/dds_io.cxxINFO  - 2024/12/31-11:50:34.283 UTC - InitializeModule.POM - Caching non-overridden class storage mode information.
+ - Teamcenter.POM at D:/workdir/tc133w1122_64/src/foundation/pom/dms/dms_class_storage_mode.cxx(1207)
+INFO  - 2024/12/31-11:50:34.290 UTC - InitializeModule.POM - Loaded schema has 2897 classes (137 versionable) and 7772 distinct attributes. - Teamcenter.POM at D:/workdir/tc133w1122_64/src/foundation/pom/dds/dds_schemas.cxx(3203)
+INFO  - 2024/12/31-11:50:34.301 UTC - InitializeModule.POM - REV: Versionable class found in schema. - Teamcenter.POM
+POMExternalTransactions are disabled.
+POMUtilityTransactions are enabled.
+INFO  - 2024/12/31-11:50:34.309 UTC - InitializeModule.POM - Caching non-overridden class storage mode information.
+ - Teamcenter.POM at D:/workdir/tc133w1122_64/src/foundation/pom/dms/dms_class_storage_mode.cxx(1207)
+NEW LOCKING MODE
+INFO  - 2024/12/31-11:50:34.335 UTC - InitializeModule.POM - POM V10.0.1.0  startup finished. - Teamcenter.POM at D:/workdir/tc133w1122_64/src/foundation/pom/pom/pom_init.cxx(687)
+DBCS CL8MSWIN1251 via DB-TEXT mapping
+INFO  - 2024/12/31-11:50:34.338 UTC - InitializeModule.TEXTSERVER - Shared memory mutex lock name for application Text Server is ":_Users_ADMINI~1_AppData_Local_Temp_1_V13000.3.0.20211122.00_2527128239_Textsrv_tc_text.xml.lck.mtx" - Teamcenter.TextServer.textsrv at D:/workdir/tc133w1122_64/src/core/textsrv/textpool.cxx(63)
+INFO  - 2024/12/31-11:50:34.668 UTC - InitializeModule.TEXTSERVER - Shared memory initialized for TextServer - Teamcenter.TextServer.textsrv at D:/workdir/tc133w1122_64/src/core/textsrv/textpool.cxx(335)
+INFO  - 2024/12/31-11:50:34.669 UTC - InitializeModule.TEXTSERVER - Shared memory mutex lock name for application Text Server is "_Users_ADMINI~1_AppData_Local_Temp_1_V13000.3.0.20211122.00_2527128239_Textsrv_emh_text.xml.lck.mtx" - Teamcenter.TextServer.textsrv at D:/workdir/tc133w1122_64/src/core/textsrv/textpool.cxx(63)
+INFO  - 2024/12/31-11:50:35.073 UTC - InitializeModule.TEXTSERVER - Shared memory initialized for TextServer - Teamcenter.TextServer.textsrv at D:/workdir/tc133w1122_64/src/core/textsrv/textpool.cxx(335)
+POM already initialised
+INFO  - 2024/12/31-11:50:35.076 UTC - InitializeModule.PREF - Preference definitions and categories are cleared. - Teamcenter.CoreModelGeneral.Preferences at D:/workdir/tc133w1122_64/src/core/tc/TCPreferencesLRUCache.cxx(252)
+INFO  - 2024/12/31-11:50:35.077 UTC - InitializeModule.PREF - Preference cache is cleared. - Teamcenter.CoreModelGeneral.Preferences at D:/workdir/tc133w1122_64/src/core/tc/TCPreferencesLRUCache.cxx(209)
+POM_Parameter contents: Parameter = 'Value' (Status):
+POM_INTERNAL_WHO_CLOSED_POM    = '2023/05/07 04:45:42 Administrator/infodba 00001a08:00001a0c ff22tc133 2305070441\business_model_updater1a084f7d.syslog' (Cached)
+POM_INTERNAL_WHO_LOCKED_SCHEMA = '2022/01/23 23:56:44 Administrator/infodba 00001f00:00001f50 ff22tc133 2201232352\business_model_updater1f001d96.syslog' (Cached)
+INFO  - 2024/12/31-11:50:35.943 UTC - InitializeModule.preLoginInitialize - library libproperty is delay loaded - Teamcenter.Metamodel.MetaFrameWork at D:/workdir/tc133w1122_64/src/core/metaframework/BusinessObjectRegistryImpl.cxx(2728)
+INFO  - 2024/12/31-11:50:36.006 UTC - InitializeModule.PRELOAD_TYPES - library libae is delay loaded - Teamcenter.Metamodel.MetaFrameWork at D:/workdir/tc133w1122_64/src/core/metaframework/BusinessObjectRegistryImpl.cxx(2728)
+INFO  - 2024/12/31-11:50:36.039 UTC - InitializeModule.PRELOAD_TYPES - library libqry is delay loaded - Teamcenter.Metamodel.MetaFrameWork at D:/workdir/tc133w1122_64/src/core/metaframework/BusinessObjectRegistryImpl.cxx(2728)
+INFO  - 2024/12/31-11:50:36.101 UTC - InitializeModule.PRELOAD_TYPES - metadata dataset version [49] metadata DB change version [49] - Teamcenter.MetaModel.sharedcache at D:/workdir/tc133w1122_64/src/core/sharedcache/SharedMetadataCacheMgr.cxx(96)
+INFO  - 2024/12/31-11:50:36.101 UTC - InitializeModule.PRELOAD_TYPES - Shared memory mutex lock name for application Metadata is "Data_Local_Temp_1_V13000.3.0.20211122.00_2527128239_Metadata_SharedMetadataMasterSegmentMgr.lck.mtx" - Teamcenter.MetaModel.sharedcache at D:/workdir/tc133w1122_64/src/core/sharedcache/SharedMetadataMasterSegmentMgr.cxx(93)
+INFO  - 2024/12/31-11:50:36.101 UTC - InitializeModule.PRELOAD_TYPES - locking "Metadata-SharedMetadataMasterSegmentMgr"  - Teamcenter.MetaModel.sharedcache at D:/workdir/tc133w1122_64/src/core/sharedcache/SharedMetadataMasterSegmentMgr.cxx(111)
+INFO  - 2024/12/31-11:50:36.104 UTC - InitializeModule.PRELOAD_TYPES - Constructed SharedMetadataMasterSegmentMgr instance @ 00000190BD351D40, mapping from 00000190BE0D0000 through 00000190BE0D0004 - Teamcenter.MetaModel.sharedcache at D:/workdir/tc133w1122_64/src/core/sharedcache/SharedMetadataMasterSegmentMgr.cxx(136)
+INFO  - 2024/12/31-11:50:36.105 UTC - InitializeModule.PRELOAD_TYPES - segmentPath [C:\Users\ADMINI~1\AppData\Local\Temp\1\V13000.3.0.20211122.00\2527128239\Metadata\Version49.mem] [does not exist] - Teamcenter.MetaModel.sharedcache at D:/workdir/tc133w1122_64/src/core/sharedcache/SharedMetadataCacheMgr.cxx(232)
+INFO  - 2024/12/31-11:50:36.141 UTC - InitializeModule.PRELOAD_TYPES - Preference Autotest_Security_Level does not exist.  Totally Secure level 1 is used by default. - Teamcenter.Organization.sa at D:/workdir/tc133w1122_64/src/core/sa/ImanVolumeImpl.cxx(4833)
+INFO  - 2024/12/31-11:50:36.143 UTC - InitializeModule.PRELOAD_TYPES - The FMS SiteID is -1767839057 - Teamcenter.Organization.sa at D:/workdir/tc133w1122_64/src/core/sa/filetickets.cxx(1200)
+INFO  - 2024/12/31-11:50:36.143 UTC - InitializeModule.PRELOAD_TYPES - Preference Ticket_Expiration_Interval does not exist.  Default of 28800 seconds used.  - Teamcenter.Organization.sa at D:/workdir/tc133w1122_64/src/core/sa/filetickets.cxx(1571)
+WARN  - 2024/12/31-11:50:36.151 UTC - InitializeModule.PRELOAD_TYPES - FMS MD5 Tickets deprecated in Tc13.1 and will be obsoleted in Tc15.0. Set the preference FMS_Use_SHA256_Tickets=true to switch to SHA-256 tickets. - Teamcenter.Organization.sa at D:/workdir/tc133w1122_64/src/core/sa/FileTicketOptions.cxx(178)
+INFO  - 2024/12/31-11:50:36.159 UTC - InitializeModule.PRELOAD_TYPES - library libbmf is delay loaded - Teamcenter.Metamodel.MetaFrameWork at D:/workdir/tc133w1122_64/src/core/metaframework/BusinessObjectRegistryImpl.cxx(2728)
+INFO  - 2024/12/31-11:50:36.167 UTC - InitializeModule.PRELOAD_TYPES - library libextensionframework is delay loaded - Teamcenter.Metamodel.MetaFrameWork at D:/workdir/tc133w1122_64/src/core/metaframework/BusinessObjectRegistryImpl.cxx(2728)
+INFO  - 2024/12/31-11:50:38.582 UTC - InitializeModule.PRELOAD_TYPES - FileTickets::getFmsBootStrapUrls Fms_BootStrap_Urls[0]=http://192.168.1.33:4544 - Teamcenter.Organization.sa at D:/workdir/tc133w1122_64/src/core/sa/filetickets.cxx(4621)
+INFO  - 2024/12/31-11:50:38.582 UTC - InitializeModule.PRELOAD_TYPES - FileTickets::getFmsBootStrapUrls Fms_BootStrap_Urls[1]=http://FF22TC133:4544 - Teamcenter.Organization.sa at D:/workdir/tc133w1122_64/src/core/sa/filetickets.cxx(4621)
+INFO  - 2024/12/31-11:50:38.597 UTC - InitializeModule.PRELOAD_TYPES - library libobjio is delay loaded - Teamcenter.Metamodel.MetaFrameWork at D:/workdir/tc133w1122_64/src/core/metaframework/BusinessObjectRegistryImpl.cxx(2728)
+INFO  - 2024/12/31-11:50:38.606 UTC - InitializeModule.PRELOAD_TYPES - FSC C Proxy functions will invoke the cURL - Teamcenter.Organization.sa at D:/workdir/tc133w1122_64/src/core/sa/fscinterface.cxx(1074)
+INFO  - 2024/12/31-11:50:39.864 UTC - InitializeModule.PRELOAD_TYPES - file size [66143990], metadatasize [222208781], and shared segment cache size [330719950] - Teamcenter.MetaModel.sharedcache at D:/workdir/tc133w1122_64/src/core/sharedcache/SegmentCacheMgr.cxx(849)
+INFO  - 2024/12/31-11:50:39.920 UTC - InitializeModule.PRELOAD_TYPES - library libconstants is delay loaded - Teamcenter.Metamodel.MetaFrameWork at D:/workdir/tc133w1122_64/src/core/metaframework/BusinessObjectRegistryImpl.cxx(2728)
+INFO  - 2024/12/31-11:50:47.136 UTC - InitializeModule.PRELOAD_TYPES - Constructed SharedMetadataCacheSegmentMgr instance @ 00000190BD879B20 for version 49, mapping from 00000190BEA40000 through 00000190CC8F9558 - Teamcenter.MetaModel.sharedcache at D:/workdir/tc133w1122_64/src/core/sharedcache/SharedMetadataCacheSegmentMgr.cxx(75)
+INFO  - 2024/12/31-11:50:47.136 UTC - InitializeModule.PRELOAD_TYPES - Initialized SharedMetadataCacheMgr with SharedMetadataCacheSegmentMgr @ 00000190BD879B20 for version 49 in [C:\Users\ADMINI~1\AppData\Local\Temp\1\V13000.3.0.20211122.00\2527128239\Metadata] - Teamcenter.MetaModel.sharedcache at D:/workdir/tc133w1122_64/src/core/sharedcache/SharedMetadataCacheMgr.cxx(260)
+INFO  - 2024/12/31-11:50:47.639 UTC - InitializeModule.PRELOAD_TYPES - Using Shared memory, MetadataCache @ 00000190BB207390 - Teamcenter.MetaModel.sharedcache at D:/workdir/tc133w1122_64/src/core/sharedcache/MetadataCache.cxx(79)
+INFO  - 2024/12/31-11:50:49.619 UTC - NoID - Command Line Argument: C:\Siemens\Teamcenter13\bin\tcserver.exe - Teamcenter.SOA.tcserver_itk_main
+INFO  - 2024/12/31-11:50:49.619 UTC - NoID - Command Line Argument: id=tcserver00001@PoolA@4548@FF22TC133 - Teamcenter.SOA.tcserver_itk_main
+INFO  - 2024/12/31-11:50:49.619 UTC - NoID - Command Line Argument: startUpTimeout=300 - Teamcenter.SOA.tcserver_itk_main
+INFO  - 2024/12/31-11:50:49.619 UTC - NoID - Command Line Argument: managerURL=http://FF22TC133:8086/PoolA - Teamcenter.SOA.tcserver_itk_main
+INFO  - 2024/12/31-11:50:49.619 UTC - NoID - Command Line Argument: useTctp - Teamcenter.SOA.tcserver_itk_main
+INFO  - 2024/12/31-11:50:49.619 UTC - FF22TC133.05704.tcserver00001 - xercesc_X_19_3_2 has been initialized. - Teamcenter.SOA.Server
+INFO  - 2024/12/31-11:50:49.619 UTC - FF22TC133.05704.tcserver00001 - Using code page ibm-5347_P100-1998 for local encoding of service request/response - Teamcenter.SOA.Server
+Successfully loaded dynamic module C:\Siemens\Teamcenter13\bin\libtcsoaserver.dll
+INFO  - 2024/12/31-11:50:49.620 UTC - Thread-5704:  - Found tctp configuration file: TctpConfig.xml- Teamcenter.SOA.Tctp
+INFO  - 2024/12/31-11:50:49.620 UTC - FF22TC133.05704.tcserver00001 - Listening for requests on pipe:tcserver00001@PoolA@4548@FF22TC133 - Teamcenter.SOA.Server
+INFO  - 2024/12/31-11:50:49.620 UTC - FF22TC133.05704.tcserver00001 - The Transient Volume Root Directory at C:\Temp\transientVolume_infodba already exists. - Teamcenter.Organization.sa at D:/workdir/tc133w1122_64/src/core/sa/filetickets.cxx(6125)
+INFO  - 2024/12/31-11:50:49.621 UTC - FF22TC133.05704.tcserver00001 - Transient volume write access verified using file: C:\Temp\transientVolume_infodba\tvrdtestfile_5700_1735645849 - Teamcenter.Organization.sa at D:/workdir/tc133w1122_64/src/core/sa/filetickets.cxx(6190)
+INFO  - 2024/12/31-11:50:49.621 UTC - FF22TC133.05704.tcserver00001 - The Transient Volume Install location is FF22TC133 - Teamcenter.Organization.sa at D:/workdir/tc133w1122_64/src/core/sa/filetickets.cxx(1138)
+INFO  - 2024/12/31-11:50:49.621 UTC - FF22TC133.05704.tcserver00001 - The Four Tier Transient Volume ID is 266b07e1f2b5790038ebd17c557a7368  - Teamcenter.Organization.sa at D:/workdir/tc133w1122_64/src/core/sa/filetickets.cxx(5153)
+INFO  - 2024/12/31-11:50:49.621 UTC - FF22TC133.05704.tcserver00001 - The Transient Volume Root Directory is C:\Temp\transientVolume_infodba  - Teamcenter.Organization.sa at D:/workdir/tc133w1122_64/src/core/sa/filetickets.cxx(1468)
+INFO  - 2024/12/31-11:50:50.879 UTC - FF22TC133.05704.tcserver00001 - INITIALIZING timeout limit:      05:00 (300s) - Teamcenter.SOA.Server
+INFO  - 2024/12/31-11:50:50.879 UTC - FF22TC133.05704.tcserver00001 - EDIT IDLE timeout limit:      08:00:00 (28800s) - Teamcenter.SOA.Server
+INFO  - 2024/12/31-11:50:50.879 UTC - FF22TC133.05704.tcserver00001 - READ IDLE timeout limit:      08:00:00 (28800s) - Teamcenter.SOA.Server
+INFO  - 2024/12/31-11:50:50.879 UTC - FF22TC133.05704.tcserver00001 - STATELESS IDLE timeout limit: 08:00:00 (28800s) - Teamcenter.SOA.Server
+INFO  - 2024/12/31-11:50:50.879 UTC - FF22TC133.05704.tcserver00001 - QUERY timeout limit:          Infinite - Teamcenter.SOA.Server
+INFO  - 2024/12/31-11:50:50.879 UTC - FF22TC133.05704.tcserver00001 - LOGOUT timeout limit:         10 seconds - Teamcenter.SOA.Server
+INFO  - 2024/12/31-11:50:51.892 UTC - FF22TC133.05704.tcserver00001 - TcServer Monitoring Mode -> Off - Teamcenter.MLD.Monitoring
+INFO  - 2024/12/31-11:50:51.892 UTC - FF22TC133.05704.tcserver00001 - Teamcenter Server is ready. - Teamcenter.SOA.Server
+Successfully loaded dynamic module C:\Siemens\Teamcenter13\bin\libfnd0soadebugmonitor.dll
+INFO  - 2024/12/31-11:50:51.953 UTC - FF22TC133.71628.03.Anonymous.00001.Svr - Teamcenter server  digital signing of services disabled. - Teamcenter.SOA.Server
