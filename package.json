@@ -18,8 +18,13 @@
     "onCommand:tcSyslog.refresh",
     "onCommand:tcSyslog.copyCategory",
     "onCommand:tcSyslog.copyEntry",
+    "onCommand:tcSyslog.addFavorite",
+    "onCommand:tcSyslog.editFavorite",
+    "onCommand:tcSyslog.removeFavorite",
+    "onCommand:tcSyslog.openFavorite",
     "onCommand:tcSyslog.openThemePanel",
     "onView:tcSyslog.explorer",
+    "onView:tcSyslog.favorites",
     "workspaceContains:**/*.syslog",
     "onLanguage:teamcenter-syslog"
   ],
@@ -38,6 +43,22 @@
         "title": "TC Syslog: Copy Entry"
       },
       {
+        "command": "tcSyslog.addFavorite",
+        "title": "TC Syslog: Add to Favorites"
+      },
+      {
+        "command": "tcSyslog.editFavorite",
+        "title": "TC Syslog: Edit Favorite Comment"
+      },
+      {
+        "command": "tcSyslog.removeFavorite",
+        "title": "TC Syslog: Remove Favorite"
+      },
+      {
+        "command": "tcSyslog.openFavorite",
+        "title": "TC Syslog: Open Favorite Entry"
+      },
+      {
         "command": "tcSyslog.openThemePanel",
         "title": "TC Syslog: Colors & Fonts"
       }
@@ -47,6 +68,10 @@
         {
           "id": "tcSyslog.explorer",
           "name": "TC Syslog"
+        },
+        {
+          "id": "tcSyslog.favorites",
+          "name": "TC Syslog Favorites"
         }
       ]
     },
@@ -65,6 +90,18 @@
           "when": "true"
         },
         {
+          "command": "tcSyslog.addFavorite",
+          "when": "true"
+        },
+        {
+          "command": "tcSyslog.editFavorite",
+          "when": "false"
+        },
+        {
+          "command": "tcSyslog.removeFavorite",
+          "when": "false"
+        },
+        {
           "command": "tcSyslog.openThemePanel",
           "when": "true"
         }
@@ -81,6 +118,24 @@
         {
           "command": "tcSyslog.copyEntry",
           "when": "view == tcSyslog.explorer && viewItem == syslogEntry"
+        },
+        {
+          "command": "tcSyslog.addFavorite",
+          "when": "view == tcSyslog.explorer && viewItem == syslogEntry"
+        },
+        {
+          "command": "tcSyslog.editFavorite",
+          "when": "view == tcSyslog.favorites && viewItem == syslogFavorite"
+        },
+        {
+          "command": "tcSyslog.removeFavorite",
+          "when": "view == tcSyslog.favorites && viewItem == syslogFavorite"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "tcSyslog.addFavorite",
+          "when": "resourceLangId == teamcenter-syslog"
         }
       ]
     },
