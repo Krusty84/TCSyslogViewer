@@ -16,6 +16,8 @@
   "activationEvents": [
     "onStartupFinished",
     "onCommand:tcSyslog.refresh",
+    "onCommand:tcSyslog.copyCategory",
+    "onCommand:tcSyslog.copyEntry",
     "onCommand:tcSyslog.openThemePanel",
     "onView:tcSyslog.explorer",
     "workspaceContains:**/*.syslog",
@@ -26,6 +28,14 @@
       {
         "command": "tcSyslog.refresh",
         "title": "TC Syslog: Refresh"
+      },
+      {
+        "command": "tcSyslog.copyCategory",
+        "title": "TC Syslog: Copy Category"
+      },
+      {
+        "command": "tcSyslog.copyEntry",
+        "title": "TC Syslog: Copy Entry"
       },
       {
         "command": "tcSyslog.openThemePanel",
@@ -47,8 +57,30 @@
           "when": "true"
         },
         {
+          "command": "tcSyslog.copyCategory",
+          "when": "true"
+        },
+        {
+          "command": "tcSyslog.copyEntry",
+          "when": "true"
+        },
+        {
           "command": "tcSyslog.openThemePanel",
           "when": "true"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "tcSyslog.copyCategory",
+          "when": "view == tcSyslog.explorer && viewItem == syslogCategory"
+        },
+        {
+          "command": "tcSyslog.copyCategory",
+          "when": "view == tcSyslog.explorer && viewItem == syslogGroup"
+        },
+        {
+          "command": "tcSyslog.copyEntry",
+          "when": "view == tcSyslog.explorer && viewItem == syslogEntry"
         }
       ]
     },
@@ -124,6 +156,30 @@
           "type": "string",
           "default": "#f8f53b7f",
           "description": "Journalling section background color"
+        },
+        "tcSyslog.limits.logLevelEntries": {
+          "type": "integer",
+          "default": 200,
+          "minimum": 1,
+          "description": "Maximum log entries per level shown under the Log Levels category."
+        },
+        "tcSyslog.limits.sqlRowsPerDump": {
+          "type": "integer",
+          "default": 200,
+          "minimum": 1,
+          "description": "Maximum rows per SQL profile dump shown in the explorer."
+        },
+        "tcSyslog.limits.journalRowsPerSection": {
+          "type": "integer",
+          "default": 50,
+          "minimum": 1,
+          "description": "Maximum journaled function rows displayed per journal section."
+        },
+        "tcSyslog.limits.inlineSqlEntries": {
+          "type": "integer",
+          "default": 200,
+          "minimum": 1,
+          "description": "Maximum inline SQL entries listed in the explorer."
         }
       }
     },

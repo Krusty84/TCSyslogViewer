@@ -3,10 +3,12 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { parseTeamcenterLog } from "./parse/teamcenterLogParser.js";
 
-const MAX_LOG_ITEMS_PER_LEVEL = 200;
-const MAX_SQL_ROWS_PER_DUMP = 200;
-const MAX_JOURNAL_FUNCTION_ROWS = 50;
-const MAX_INLINE_SQL_NODES = 200;
+const DEFAULT_LIMITS = {
+  logLevelEntries: 200,
+  sqlRowsPerDump: 200,
+  journalRowsPerSection: 50,
+  inlineSqlEntries: 200,
+};
 const LEVEL_ORDER = ["FATAL", "ERROR", "WARN", "NOTE", "INFO", "DEBUG"];
 const LEVEL_CONFIG_OVERRIDES = { WARN: "WARNING" };
 const LEVEL_ICONS = {
@@ -16,6 +18,11 @@ const LEVEL_ICONS = {
   NOTE: "book",
   INFO: "info",
   DEBUG: "beaker",
+};
+const NODE_CONTEXT = {
+  CATEGORY: "syslogCategory",
+  GROUP: "syslogGroup",
+  ENTRY: "syslogEntry",
 };
 
 class SyslogTreeDataProvider {
@@ -108,6 +115,7 @@ class SyslogController {
 
     this.context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((event) => {
+        let refreshTree = false;
         if (this.shouldReloadDecorations(event)) {
           this.reloadDecorationTypes();
           if (this.currentUri && this.latestParsed) {
@@ -118,6 +126,13 @@ class SyslogController {
               this.applyDecorations(document, this.latestParsed);
             }
           }
+        }
+        if (event?.affectsConfiguration("tcSyslog.limits")) {
+          refreshTree = true;
+        }
+        if (refreshTree && this.currentUri && this.latestParsed) {
+          const model = buildTreeModel(this.latestParsed, this.currentUri);
+          this.treeDataProvider.setModel(model);
         }
       })
     );
@@ -756,6 +771,91 @@ class SyslogController {
     }
   }
 
+  resolveNodeForCommand(node) {
+    if (node) {
+      return node;
+    }
+    const selection = this.treeView?.selection;
+    if (selection && selection.length) {
+      return selection[0];
+    }
+    return null;
+  }
+
+  ensureParsedModel() {
+    if (!this.latestParsed || !this.currentUri) {
+      vscode.window.showWarningMessage(
+        "TC Syslog: no parsed data is available to copy"
+      );
+      return null;
+    }
+    return this.latestParsed;
+  }
+
+  async copyCategory(node) {
+    const target = this.resolveNodeForCommand(node);
+    if (!target) {
+      vscode.window.showInformationMessage(
+        "TC Syslog: select a category in the explorer to copy"
+      );
+      return;
+    }
+    if (!target.children || !target.children.length) {
+      await this.copyEntry(target);
+      return;
+    }
+    const parsed = this.ensureParsedModel();
+    if (!parsed) {
+      return;
+    }
+    const lines = collectNodeClipboardTexts(target, parsed, {
+      includeChildren: true,
+    });
+    if (!lines.length) {
+      vscode.window.showInformationMessage(
+        "TC Syslog: nothing to copy for this category"
+      );
+      return;
+    }
+    await vscode.env.clipboard.writeText(lines.join("\n"));
+    vscode.window.setStatusBarMessage(
+      "TC Syslog: category copied to clipboard",
+      2500
+    );
+  }
+
+  async copyEntry(node) {
+    const target = this.resolveNodeForCommand(node);
+    if (!target) {
+      vscode.window.showInformationMessage(
+        "TC Syslog: select an entry to copy"
+      );
+      return;
+    }
+    if (target.children && target.children.length) {
+      await this.copyCategory(target);
+      return;
+    }
+    const parsed = this.ensureParsedModel();
+    if (!parsed) {
+      return;
+    }
+    const lines = collectNodeClipboardTexts(target, parsed, {
+      includeChildren: false,
+    });
+    if (!lines.length) {
+      vscode.window.showInformationMessage(
+        "TC Syslog: nothing to copy for this entry"
+      );
+      return;
+    }
+    await vscode.env.clipboard.writeText(lines.join("\n"));
+    vscode.window.setStatusBarMessage(
+      "TC Syslog: entry copied to clipboard",
+      2500
+    );
+  }
+
   async openThemePanel() {
     if (this.themePanel) {
       this.themePanel.reveal(vscode.ViewColumn.Beside);
@@ -929,18 +1029,216 @@ function isSyslogDocument(document) {
   return fileName.endsWith(".syslog");
 }
 
+function getExplorerLimits() {
+  const config = vscode.workspace.getConfiguration("tcSyslog");
+  const readLimit = (key, fallback) => {
+    const value = config.get(key);
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      return fallback;
+    }
+    const normalized = Math.max(0, Math.floor(value));
+    return normalized || fallback;
+  };
+  return {
+    logLevelEntries: readLimit(
+      "limits.logLevelEntries",
+      DEFAULT_LIMITS.logLevelEntries
+    ),
+    sqlRowsPerDump: readLimit(
+      "limits.sqlRowsPerDump",
+      DEFAULT_LIMITS.sqlRowsPerDump
+    ),
+    journalRowsPerSection: readLimit(
+      "limits.journalRowsPerSection",
+      DEFAULT_LIMITS.journalRowsPerSection
+    ),
+    inlineSqlEntries: readLimit(
+      "limits.inlineSqlEntries",
+      DEFAULT_LIMITS.inlineSqlEntries
+    ),
+  };
+}
+
+function collectNodeClipboardTexts(node, parsed, options = {}) {
+  if (!node || !parsed) {
+    return [];
+  }
+  const includeChildren = options.includeChildren !== false;
+  const seenLines = new Set();
+  const collected = [];
+  let order = 0;
+
+  const visit = (current, traverseChildren) => {
+    if (!current) {
+      return;
+    }
+    if (current.clipboardExclude) {
+      if (traverseChildren && Array.isArray(current.children)) {
+        for (const child of current.children) {
+          visit(child, true);
+        }
+      }
+      return;
+    }
+    const resolved = resolveNodeClipboardEntries(current, parsed, seenLines);
+    for (const item of resolved) {
+      if (typeof item.text === "string" && item.text.length) {
+        collected.push({
+          text: item.text,
+          line:
+            typeof item.line === "number" && Number.isFinite(item.line)
+              ? item.line
+              : undefined,
+          order,
+        });
+        order += 1;
+      }
+    }
+    if (traverseChildren && Array.isArray(current.children)) {
+      for (const child of current.children) {
+        visit(child, true);
+      }
+    }
+  };
+
+  visit(node, includeChildren);
+
+  collected.sort((a, b) => {
+    const aLine =
+      typeof a.line === "number" ? a.line : Number.POSITIVE_INFINITY;
+    const bLine =
+      typeof b.line === "number" ? b.line : Number.POSITIVE_INFINITY;
+    if (aLine !== bLine) {
+      return aLine - bLine;
+    }
+    return a.order - b.order;
+  });
+
+  return collected.map((entry) => entry.text);
+}
+
+function resolveNodeClipboardEntries(node, parsed, seenLines) {
+  const results = [];
+
+  const addLine = (line) => {
+    if (typeof line !== "number" || !Number.isFinite(line) || line < 0) {
+      return;
+    }
+    if (seenLines.has(line)) {
+      return;
+    }
+    const text = getLineText(parsed, line);
+    if (typeof text !== "string") {
+      return;
+    }
+    seenLines.add(line);
+    results.push({ text, line });
+  };
+
+  const addText = (text) => {
+    if (typeof text !== "string" || !text.length) {
+      return;
+    }
+    results.push({ text });
+  };
+
+  const processItem = (item) => {
+    if (item === null || item === undefined) {
+      return;
+    }
+    if (typeof item === "number") {
+      addLine(item);
+      return;
+    }
+    if (typeof item === "string") {
+      addText(item);
+      return;
+    }
+    if (typeof item === "object") {
+      if (typeof item.line === "number") {
+        addLine(item.line);
+      }
+      if (typeof item.text === "string") {
+        addText(item.text);
+      }
+    }
+  };
+
+  if (Array.isArray(node.clipboardLines)) {
+    for (const value of node.clipboardLines) {
+      processItem(value);
+    }
+  }
+  if (Array.isArray(node.clipboardItems)) {
+    for (const value of node.clipboardItems) {
+      processItem(value);
+    }
+  }
+  if (typeof node.copyText === "string") {
+    addText(node.copyText);
+  }
+  if (typeof node.line === "number") {
+    processItem(node.line);
+  }
+
+  if (!results.length && (!node.children || !node.children.length)) {
+    const fallback = buildNodeFallbackText(node);
+    if (fallback) {
+      addText(fallback);
+    }
+  }
+
+  return results;
+}
+
+function getLineText(parsed, line) {
+  if (!parsed || !Array.isArray(parsed.lines)) {
+    return null;
+  }
+  if (line < 0 || line >= parsed.lines.length) {
+    return null;
+  }
+  return parsed.lines[line];
+}
+
+function buildNodeFallbackText(node) {
+  if (!node) {
+    return null;
+  }
+  const parts = [];
+  if (node.label) {
+    parts.push(String(node.label));
+  }
+  if (node.description) {
+    parts.push(String(node.description));
+  }
+  if (!parts.length) {
+    return null;
+  }
+  return parts.join(parts.length > 1 ? " - " : "");
+}
+
+
 function buildTreeModel(parsed, resource) {
   if (!parsed) {
     return { resource, nodes: [] };
   }
 
+  const limits = getExplorerLimits();
   const nodes = [];
   const overviewChildren = [];
+  const isValidLine = (line) =>
+    typeof line === "number" && Number.isFinite(line) && line >= 0;
+  const collectLinesFromObjects = (items) =>
+    items
+      .map((item) => item?.line)
+      .filter((line) => isValidLine(line));
 
   if (parsed.header) {
     const headerPreview =
       parsed.header.lines?.map((entry) => entry.text).join(" - ") ?? "";
     const headerDescription = truncate(headerPreview, 120);
+    const headerLines = collectLinesFromObjects(parsed.header.lines ?? []);
     overviewChildren.push({
       id: "overview:header",
       label: "Header",
@@ -948,6 +1246,8 @@ function buildTreeModel(parsed, resource) {
       tooltip: headerPreview,
       line: parsed.header.line,
       icon: "symbol-keyword",
+      clipboardLines: headerLines,
+      contextValue: NODE_CONTEXT.ENTRY,
     });
   }
 
@@ -959,12 +1259,16 @@ function buildTreeModel(parsed, resource) {
       tooltip: entry.value,
       line: entry.line,
       icon: "info",
+      contextValue: NODE_CONTEXT.ENTRY,
     }));
+    const systemLines = collectLinesFromObjects(systemChildren);
     overviewChildren.push({
       id: "overview:systemInfo",
       label: `System Info (${systemChildren.length})`,
       children: systemChildren,
       icon: "info",
+      clipboardLines: systemLines,
+      contextValue: NODE_CONTEXT.GROUP,
     });
   }
 
@@ -979,15 +1283,19 @@ function buildTreeModel(parsed, resource) {
         tooltip: entry.value,
         line: entry.line,
         icon: "symbol-parameter",
+        contextValue: NODE_CONTEXT.ENTRY,
       });
     }
   }
   if (envEntries.length) {
+    const envLines = collectLinesFromObjects(envEntries);
     overviewChildren.push({
       id: "overview:env",
       label: `Environment (${envEntries.length})`,
       children: envEntries,
       icon: "gear",
+      clipboardLines: envLines,
+      contextValue: NODE_CONTEXT.GROUP,
     });
   }
 
@@ -1002,60 +1310,79 @@ function buildTreeModel(parsed, resource) {
         tooltip: `${entry.path} (${entry.version})`,
         line: entry.line,
         icon: "library",
+        contextValue: NODE_CONTEXT.ENTRY,
       });
     }
   }
   if (dllEntries.length) {
+    const dllLines = collectLinesFromObjects(dllEntries);
     overviewChildren.push({
       id: "overview:dll",
       label: `DLL Versions (${dllEntries.length})`,
       children: dllEntries,
       icon: "extensions",
+      clipboardLines: dllLines,
+      contextValue: NODE_CONTEXT.GROUP,
     });
   }
 
   if (parsed.pomStats?.length) {
+    const children = parsed.pomStats.map((entry, index) => ({
+      id: `pom:${index}:${entry.line}`,
+      label: `Entry at line ${entry.line + 1}`,
+      description: parsed.lines?.[entry.line]?.trim() ?? "",
+      line: entry.line,
+      icon: "graph",
+      contextValue: NODE_CONTEXT.ENTRY,
+    }));
+    const pomLines = collectLinesFromObjects(children);
     overviewChildren.push({
       id: "overview:pom",
-      label: `POM Statistics (${parsed.pomStats.length})`,
-      children: parsed.pomStats.map((entry, index) => ({
-        id: `pom:${index}:${entry.line}`,
-        label: `Entry at line ${entry.line + 1}`,
-        description: parsed.lines?.[entry.line]?.trim() ?? "",
-        line: entry.line,
-        icon: "graph",
-      })),
+      label: `POM Statistics (${children.length})`,
+      children,
       icon: "graph",
+      clipboardLines: pomLines,
+      contextValue: NODE_CONTEXT.GROUP,
     });
   }
 
   if (parsed.endSessions?.length) {
+    const children = parsed.endSessions.map((entry, index) => ({
+      id: `end:${index}:${entry.line}`,
+      label: `Marker at line ${entry.line + 1}`,
+      description: parsed.lines?.[entry.line]?.trim() ?? "",
+      line: entry.line,
+      icon: "debug-stop",
+      contextValue: NODE_CONTEXT.ENTRY,
+    }));
+    const endLines = collectLinesFromObjects(children);
     overviewChildren.push({
       id: "overview:endSession",
-      label: `End of Session (${parsed.endSessions.length})`,
-      children: parsed.endSessions.map((entry, index) => ({
-        id: `end:${index}:${entry.line}`,
-        label: `Marker at line ${entry.line + 1}`,
-        description: parsed.lines?.[entry.line]?.trim() ?? "",
-        line: entry.line,
-        icon: "debug-stop",
-      })),
+      label: `End of Session (${children.length})`,
+      children,
       icon: "debug-stop",
+      clipboardLines: endLines,
+      contextValue: NODE_CONTEXT.GROUP,
     });
   }
 
   if (parsed.truncated?.length) {
+    const children = parsed.truncated.map((entry, index) => ({
+      id: `truncated:${index}:${entry.line}`,
+      label: `Truncated at line ${entry.line + 1}`,
+      description: parsed.lines?.[entry.line]?.trim() ?? "",
+      line: entry.line,
+      icon: "warning",
+      contextValue: NODE_CONTEXT.ENTRY,
+    }));
+    const truncatedLines = collectLinesFromObjects(children);
     overviewChildren.push({
       id: "overview:truncated",
-      label: `Truncated (${parsed.truncated.length})`,
-      children: parsed.truncated.map((entry, index) => ({
-        id: `truncated:${index}:${entry.line}`,
-        label: `Truncated at line ${entry.line + 1}`,
-        description: parsed.lines?.[entry.line]?.trim() ?? "",
-        line: entry.line,
-        icon: "warning",
-      })),
+      label: `Truncated (${children.length})`,
+      children,
       icon: "warning",
+      clipboardLines: truncatedLines,
+      contextValue: NODE_CONTEXT.GROUP,
     });
   }
 
@@ -1066,47 +1393,64 @@ function buildTreeModel(parsed, resource) {
       children: overviewChildren,
       icon: "list-tree",
       expanded: true,
+      contextValue: NODE_CONTEXT.CATEGORY,
     });
   }
 
   if (parsed.sqlDumps?.length) {
+    const sqlNodes = parsed.sqlDumps.map((entry, index) => {
+      const startLine = entry.line ?? 0;
+      const endLine = entry.endLine ?? entry.line ?? startLine;
+      const description =
+        endLine > startLine
+          ? `Lines ${startLine + 1}-${endLine + 1}`
+          : `Line ${startLine + 1}`;
+      const allRows = entry.rows ?? [];
+      const displayRows = allRows.slice(0, limits.sqlRowsPerDump);
+      const rowChildren = displayRows.map((row, rowIndex) => ({
+        id: `sql:${index}:row:${rowIndex}:${row.line}`,
+        label: truncate((row.text ?? "").trim() || `Row ${rowIndex + 1}`, 80),
+        description: `Line ${row.line + 1}`,
+        line: row.line,
+        icon: "symbol-string",
+        contextValue: NODE_CONTEXT.ENTRY,
+        clipboardItems:
+          typeof row.text === "string" && row.text.length
+            ? [{ text: row.text }]
+            : undefined,
+      }));
+      if (allRows.length > limits.sqlRowsPerDump) {
+        rowChildren.push({
+          id: `sql:${index}:overflow`,
+          label: `... ${allRows.length - limits.sqlRowsPerDump} more rows`,
+          description: "Use search in the editor for additional entries",
+          icon: "ellipsis",
+          clipboardExclude: true,
+        });
+      }
+      const dumpLines = [];
+      for (let lineIndex = startLine; lineIndex <= endLine; lineIndex += 1) {
+        if (isValidLine(lineIndex)) {
+          dumpLines.push(lineIndex);
+        }
+      }
+      return {
+        id: `sql:${index}:${startLine}`,
+        label: `Dump #${index + 1}`,
+        description,
+        line: startLine,
+        children: rowChildren,
+        icon: "database",
+        clipboardLines: dumpLines,
+        contextValue: NODE_CONTEXT.GROUP,
+      };
+    });
     nodes.push({
       id: "root:sql",
       label: `SQL Profile Dumps (${parsed.sqlDumps.length})`,
-      children: parsed.sqlDumps.map((entry, index) => {
-        const startLine = entry.line ?? 0;
-        const endLine = entry.endLine ?? entry.line ?? 0;
-        const description =
-          endLine > startLine
-            ? `Lines ${startLine + 1}-${endLine + 1}`
-            : `Line ${startLine + 1}`;
-        const allRows = entry.rows ?? [];
-        const displayRows = allRows.slice(0, MAX_SQL_ROWS_PER_DUMP);
-        const rowChildren = displayRows.map((row, rowIndex) => ({
-          id: `sql:${index}:row:${rowIndex}:${row.line}`,
-          label: truncate((row.text ?? "").trim() || `Row ${rowIndex + 1}`, 80),
-          description: `Line ${row.line + 1}`,
-          line: row.line,
-          icon: "symbol-string",
-        }));
-        if (allRows.length > MAX_SQL_ROWS_PER_DUMP) {
-          rowChildren.push({
-            id: `sql:${index}:overflow`,
-            label: `... ${allRows.length - MAX_SQL_ROWS_PER_DUMP} more rows`,
-            description: "Use search in the editor for additional entries",
-            icon: "ellipsis",
-          });
-        }
-        return {
-          id: `sql:${index}:${startLine}`,
-          label: `Dump #${index + 1}`,
-          description,
-          line: startLine,
-          children: rowChildren,
-          icon: "database",
-        };
-      }),
+      children: sqlNodes,
       icon: "database",
+      contextValue: NODE_CONTEXT.CATEGORY,
     });
   }
 
@@ -1127,7 +1471,7 @@ function buildTreeModel(parsed, resource) {
                 (section.endLine ?? section.line) + 1
               }`;
         const rowChildren = (section.rows ?? [])
-          .slice(0, MAX_JOURNAL_FUNCTION_ROWS)
+          .slice(0, limits.journalRowsPerSection)
           .map((row, rowIndex) => {
             const percentLabel = row.percent ? `${row.percent}%` : "";
             const functionLabel = truncate(
@@ -1152,17 +1496,31 @@ function buildTreeModel(parsed, resource) {
               line: row.line,
               tooltip: row.text ?? "",
               icon: "graph",
+              contextValue: NODE_CONTEXT.ENTRY,
+              clipboardItems:
+                typeof row.text === "string" && row.text.length
+                  ? [{ text: row.text }]
+                  : undefined,
             };
           });
-        if ((section.rows?.length ?? 0) > MAX_JOURNAL_FUNCTION_ROWS) {
+        if ((section.rows?.length ?? 0) > limits.journalRowsPerSection) {
           rowChildren.push({
             id: `journal:${index}:overflow`,
             label: `... ${
-              section.rows.length - MAX_JOURNAL_FUNCTION_ROWS
+              section.rows.length - limits.journalRowsPerSection
             } more entries`,
             description: "Use search in the editor for additional entries",
             icon: "ellipsis",
+            clipboardExclude: true,
           });
+        }
+        const sectionLines = [];
+        const startLine = section.line ?? 0;
+        const endLine = section.endLine ?? section.line ?? startLine;
+        for (let lineIndex = startLine; lineIndex <= endLine; lineIndex += 1) {
+          if (isValidLine(lineIndex)) {
+            sectionLines.push(lineIndex);
+          }
         }
         return {
           id: `journal:${index}:${section.line}`,
@@ -1171,6 +1529,8 @@ function buildTreeModel(parsed, resource) {
           line: section.line,
           children: rowChildren,
           icon: "graph",
+          clipboardLines: sectionLines,
+          contextValue: NODE_CONTEXT.GROUP,
         };
       }
     );
@@ -1179,6 +1539,7 @@ function buildTreeModel(parsed, resource) {
       label: `Journalled Times (${journalNodes.length})`,
       children: journalNodes,
       icon: "graph",
+      contextValue: NODE_CONTEXT.CATEGORY,
     });
   }
 
@@ -1193,7 +1554,7 @@ function buildTreeModel(parsed, resource) {
     .sort((a, b) => levelRank(a[0]) - levelRank(b[0]))
     .map(([level, entries]) => {
       const orderedEntries = [...entries].sort((a, b) => a.line - b.line);
-      const display = orderedEntries.slice(0, MAX_LOG_ITEMS_PER_LEVEL);
+      const display = orderedEntries.slice(0, limits.logLevelEntries);
       const children = display.map((entry) => ({
         id: `log:${level}:${entry.line}`,
         label: `${entry.timestamp} - ${truncate(entry.message, 80)}`,
@@ -1201,64 +1562,89 @@ function buildTreeModel(parsed, resource) {
         tooltip: entry.message,
         line: entry.line,
         icon: "symbol-event",
+        contextValue: NODE_CONTEXT.ENTRY,
+        clipboardItems:
+          typeof entry.message === "string" && entry.message.length
+            ? [{ text: entry.message }]
+            : undefined,
       }));
-      if (entries.length > MAX_LOG_ITEMS_PER_LEVEL) {
+      if (entries.length > limits.logLevelEntries) {
         children.push({
           id: `log:${level}:overflow`,
-          label: `... ${entries.length - MAX_LOG_ITEMS_PER_LEVEL} more`,
+          label: `... ${entries.length - limits.logLevelEntries} more`,
           description: "Use search in the editor for additional entries",
           icon: "ellipsis",
+          clipboardExclude: true,
         });
       }
+      const levelLines = collectLinesFromObjects(entries);
       return {
         id: `level:${level}`,
         label: `${level} (${entries.length})`,
         children,
         icon: LEVEL_ICONS[level] ?? "circle-filled",
+        clipboardLines: levelLines,
+        contextValue: NODE_CONTEXT.GROUP,
       };
     })
     .filter((node) => node.children.length);
   if (levelNodes.length) {
+    const allLogLines = collectLinesFromObjects(parsed.logLines ?? []);
     nodes.push({
       id: "root:levels",
       label: `Log Levels (${parsed.logLines.length})`,
       children: levelNodes,
       icon: "symbol-class",
+      clipboardLines: allLogLines,
+      contextValue: NODE_CONTEXT.CATEGORY,
     });
   }
 
   if (parsed.inlineSqlLines?.length) {
-    const inlineEntries = parsed.inlineSqlLines.slice(0, MAX_INLINE_SQL_NODES);
+    const inlineEntries = parsed.inlineSqlLines.slice(0, limits.inlineSqlEntries);
     const inlineSqlNodes = inlineEntries.map((entry, index) => ({
       id: `inlineSql:${index}:${entry.line}`,
       label: truncate(
         (entry.text ?? "").trim() || `SQL Statement ${index + 1}`,
         80
       ),
-      description: `Line ${entry.line + 1}`,
+      description:
+        isValidLine(entry.line) && entry.line !== undefined
+          ? `Line ${entry.line + 1}`
+          : "",
       line: entry.line,
       icon: entry.fromLog ? "symbol-operator" : "symbol-string",
+      contextValue: NODE_CONTEXT.ENTRY,
+      clipboardItems:
+        typeof entry.text === "string" && entry.text.length
+          ? [{ text: entry.text }]
+          : undefined,
     }));
-    if ((parsed.inlineSqlLines.length ?? 0) > MAX_INLINE_SQL_NODES) {
+    if ((parsed.inlineSqlLines.length ?? 0) > limits.inlineSqlEntries) {
       inlineSqlNodes.push({
         id: "inlineSql:overflow",
         label: `... ${
-          parsed.inlineSqlLines.length - MAX_INLINE_SQL_NODES
+          parsed.inlineSqlLines.length - limits.inlineSqlEntries
         } more entries`,
         description: "Use search in the editor for additional entries",
         icon: "ellipsis",
+        clipboardExclude: true,
       });
     }
+    const inlineLines = collectLinesFromObjects(parsed.inlineSqlLines ?? []);
     nodes.push({
       id: "root:inlineSql",
       label: `Inline SQL (${parsed.inlineSqlLines.length})`,
       children: inlineSqlNodes,
       icon: "symbol-operator",
+      clipboardLines: inlineLines,
+      contextValue: NODE_CONTEXT.CATEGORY,
     });
   }
 
   return { resource, nodes };
 }
+
 
 function winBasename(filePath) {
   if (!filePath) {
@@ -1292,6 +1678,12 @@ export function activate(context) {
     ),
     vscode.commands.registerCommand("tcSyslog.revealLine", (resource, line) =>
       controller.reveal(resource, line)
+    ),
+    vscode.commands.registerCommand("tcSyslog.copyCategory", (node) =>
+      controller.copyCategory(node)
+    ),
+    vscode.commands.registerCommand("tcSyslog.copyEntry", (node) =>
+      controller.copyEntry(node)
     ),
     vscode.commands.registerCommand("tcSyslog.openThemePanel", () =>
       controller.openThemePanel()
