@@ -61,12 +61,23 @@
       {
         "command": "tcSyslog.openThemePanel",
         "title": "TC Syslog: Colors & Fonts"
+      },
+      {
+        "command": "tcSyslog.findAllMentions",
+        "title": "TC Syslog: Find All Mentions"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
           "id": "tcSyslogSidebar",
+          "title": "Teamcenter Syslog",
+          "icon": "media/icon.svg"
+        }
+      ],
+      "panel": [
+        {
+          "id": "tcSyslogPanel",
           "title": "Teamcenter Syslog",
           "icon": "media/icon.svg"
         }
@@ -81,6 +92,12 @@
         {
           "id": "tcSyslogFavorites",
           "name": "Favorites"
+        }
+      ],
+      "tcSyslogPanel": [
+        {
+          "id": "tcSyslogMentions",
+          "name": "Mentions"
         }
       ]
     },
@@ -113,6 +130,10 @@
         {
           "command": "tcSyslog.openThemePanel",
           "when": "true"
+        },
+        {
+          "command": "tcSyslog.findAllMentions",
+          "when": "true"
         }
       ],
       "view/item/context": [
@@ -144,6 +165,10 @@
       "editor/context": [
         {
           "command": "tcSyslog.addFavorite",
+          "when": "resourceLangId == teamcenter-syslog"
+        },
+        {
+          "command": "tcSyslog.findAllMentions",
           "when": "resourceLangId == teamcenter-syslog"
         }
       ]

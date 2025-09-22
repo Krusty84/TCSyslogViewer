@@ -140,6 +140,78 @@ class FavoritesTreeDataProvider {
   }
 }
 
+class MentionsTreeDataProvider {
+  constructor() {
+    this._onDidChangeTreeData = new vscode.EventEmitter();
+    this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+    this.model = {
+      resource: null,
+      query: "",
+      matches: [],
+      truncated: false,
+    };
+  }
+
+  setModel(model) {
+    this.model = model;
+    this._onDidChangeTreeData.fire();
+  }
+
+  clear() {
+    this.setModel({ resource: null, query: "", matches: [], truncated: false });
+  }
+
+  getChildren() {
+    const matches = this.model.matches ?? [];
+    if (!matches.length || !this.model.query) {
+      return matches;
+    }
+    const summaryText = this.model.truncated
+      ? `${matches.length}+ matches for "${truncate(this.model.query, 40)}"`
+      : `${matches.length} matches for "${truncate(this.model.query, 40)}"`;
+    const summaryNode = {
+      id: "mentions:summary",
+      type: "summary",
+      label: summaryText,
+      tooltip: summaryText,
+    };
+    return [summaryNode, ...matches];
+  }
+
+  getTreeItem(node) {
+    if (node.type === "summary") {
+      const summaryItem = new vscode.TreeItem(node.label);
+      summaryItem.tooltip = node.tooltip;
+      summaryItem.iconPath = new vscode.ThemeIcon("list-selection");
+      summaryItem.contextValue = "syslogMentionsSummary";
+      return summaryItem;
+    }
+    const label = truncate(node.text ?? "", 140) || `(empty line)`;
+    const item = new vscode.TreeItem(
+      label,
+      vscode.TreeItemCollapsibleState.None
+    );
+    item.description = `Line ${node.line + 1}`;
+    item.tooltip = `Line ${node.line + 1}, Column ${node.column + 1}`;
+    item.command = {
+      command: "tcSyslog.revealLine",
+      title: "Reveal Mention",
+      arguments: [
+        this.model.resource,
+        node.line,
+        {
+          startLine: node.line,
+          startCharacter: node.column,
+          endLine: node.line,
+          endCharacter: node.column + (node.length ?? 0),
+        },
+      ],
+    };
+    item.iconPath = new vscode.ThemeIcon("search");
+    return item;
+  }
+}
+
 class FavoritesManager {
   constructor(controller, context) {
     this.controller = controller;
@@ -532,10 +604,16 @@ class SyslogController {
     this.baseFontDecorationType = undefined;
     this.latestParsed = null;
     this.favoritesManager = new FavoritesManager(this, context);
+    this.mentionsDataProvider = new MentionsTreeDataProvider();
+    this.mentionsView = vscode.window.createTreeView("tcSyslogMentions", {
+      treeDataProvider: this.mentionsDataProvider,
+    });
+    this.mentionsView.message = "Run Find All Mentions to populate results.";
     this.context.subscriptions.push(this.treeView);
     this.context.subscriptions.push({
       dispose: () => this.disposeDecorationTypes(),
     });
+    this.context.subscriptions.push(this.mentionsView);
 
     this.reloadDecorationTypes();
 
@@ -1129,6 +1207,11 @@ class SyslogController {
     this.treeDataProvider.clear();
     this.treeView.message = message;
     this.favoritesManager.clear();
+    this.mentionsDataProvider.clear();
+    if (this.mentionsView) {
+      this.mentionsView.message = "Run Find All Mentions to populate results.";
+      this.mentionsView.description = undefined;
+    }
   }
 
   refreshActive() {
@@ -1448,6 +1531,116 @@ class SyslogController {
       );
     }
     return null;
+  }
+
+  async findAllMentions() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || !isSyslogDocument(editor.document)) {
+      vscode.window.showInformationMessage(
+        "TC Syslog: open a Teamcenter syslog file and select text to search."
+      );
+      return;
+    }
+    const selection = editor.selection;
+    const selectedText = editor.document.getText(selection);
+    const needle = selectedText.trim();
+    if (!needle) {
+      vscode.window.showInformationMessage(
+        "TC Syslog: select some text before running Find All Mentions."
+      );
+      return;
+    }
+
+    const document = editor.document;
+    const haystack = document.getText();
+    if (!haystack.length) {
+      vscode.window.showWarningMessage("TC Syslog: current document is empty.");
+      return;
+    }
+
+    const limit = 500;
+    const matches = [];
+    let index = 0;
+    while (index !== -1) {
+      index = haystack.indexOf(needle, index);
+      if (index === -1) {
+        break;
+      }
+      const startPosition = document.positionAt(index);
+      const endPosition = document.positionAt(index + needle.length);
+      const lineText = document.lineAt(startPosition.line).text;
+      matches.push({
+        line: startPosition.line,
+        column: startPosition.character,
+        length: needle.length,
+        text: lineText,
+        start: startPosition,
+        end: endPosition,
+      });
+      if (matches.length >= limit) {
+        break;
+      }
+      index += Math.max(needle.length, 1);
+    }
+
+    if (!matches.length) {
+      vscode.window.showInformationMessage(
+        `TC Syslog: no mentions of "${truncate(needle, 80)}" found.`
+      );
+      this.mentionsDataProvider.clear();
+      if (this.mentionsView) {
+        this.mentionsView.message = `No mentions found for "${truncate(
+          needle,
+          60
+        )}".`;
+        this.mentionsView.description = `0 • "${truncate(needle, 30)}"`;
+      }
+      return;
+    }
+
+    const extraMatches = (() => {
+      if (matches.length < limit) {
+        return 0;
+      }
+      const nextIndex = haystack.indexOf(needle, index);
+      return nextIndex === -1 ? 0 : 1;
+    })();
+    this.mentionsDataProvider.setModel({
+      resource: document.uri,
+      query: needle,
+      matches,
+      truncated: Boolean(extraMatches),
+    });
+
+    if (this.mentionsView) {
+      this.mentionsView.message = extraMatches
+        ? `Showing first ${matches.length} mentions for "${truncate(
+            needle,
+            60
+          )}".`
+        : undefined;
+      const countLabel = extraMatches
+        ? `${matches.length}+`
+        : String(matches.length);
+      this.mentionsView.description = `${countLabel} • "${truncate(
+        needle,
+        30
+      )}"`;
+    }
+
+    await vscode.commands.executeCommand(
+      "workbench.view.extension.tcSyslogPanel"
+    );
+    if (matches.length) {
+      try {
+        await this.mentionsView.reveal(matches[0], {
+          focus: false,
+          select: false,
+        });
+      } catch (error) {
+        // ignore reveal issues
+      }
+    }
   }
 
   async openThemePanel() {
@@ -2289,6 +2482,9 @@ export function activate(context) {
     ),
     vscode.commands.registerCommand("tcSyslog.openFavorite", (favoriteId) =>
       controller.openFavorite(favoriteId)
+    ),
+    vscode.commands.registerCommand("tcSyslog.findAllMentions", () =>
+      controller.findAllMentions()
     ),
     vscode.commands.registerCommand("tcSyslog.openThemePanel", () =>
       controller.openThemePanel()
