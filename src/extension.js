@@ -145,7 +145,7 @@ class FavoritesManager {
     this.controller = controller;
     this.context = context;
     this.treeDataProvider = new FavoritesTreeDataProvider();
-    this.treeView = vscode.window.createTreeView("tcSyslog.favorites", {
+    this.treeView = vscode.window.createTreeView("tcSyslogFavorites", {
       treeDataProvider: this.treeDataProvider,
     });
     this.entries = [];
@@ -167,7 +167,8 @@ class FavoritesManager {
     this.currentDocument = null;
     this.latestParsed = null;
     this.favoritesUri = null;
-    this.treeView.message = "Add favorites from the TC Syslog explorer or editor.";
+    this.treeView.message =
+      "Add favorites from the Content view or directly from the editor.";
     this.treeDataProvider.clear();
   }
 
@@ -228,9 +229,10 @@ class FavoritesManager {
     if (!entry || typeof entry !== "object") {
       return null;
     }
-    const id = typeof entry.id === "string" && entry.id.trim()
-      ? entry.id.trim()
-      : this.generateId();
+    const id =
+      typeof entry.id === "string" && entry.id.trim()
+        ? entry.id.trim()
+        : this.generateId();
     const line = this.normalizeNumber(entry.line, null);
     const textSnippet =
       typeof entry.textSnippet === "string" ? entry.textSnippet : "";
@@ -293,8 +295,10 @@ class FavoritesManager {
 
   sortEntries() {
     this.entries.sort((a, b) => {
-      const lineA = typeof a.line === "number" ? a.line : Number.POSITIVE_INFINITY;
-      const lineB = typeof b.line === "number" ? b.line : Number.POSITIVE_INFINITY;
+      const lineA =
+        typeof a.line === "number" ? a.line : Number.POSITIVE_INFINITY;
+      const lineB =
+        typeof b.line === "number" ? b.line : Number.POSITIVE_INFINITY;
       if (lineA !== lineB) {
         return lineA - lineB;
       }
@@ -379,13 +383,9 @@ class FavoritesManager {
       range: this.normalizeRange(payload.range),
       textSnippet: this.normalizeSnippet(payload.textSnippet),
       label:
-        typeof payload.label === "string"
-          ? payload.label.slice(0, 200)
-          : "",
+        typeof payload.label === "string" ? payload.label.slice(0, 200) : "",
       comment:
-        typeof payload.comment === "string"
-          ? payload.comment.trim()
-          : "",
+        typeof payload.comment === "string" ? payload.comment.trim() : "",
       createdAt: now,
       updatedAt: now,
     };
@@ -435,10 +435,7 @@ class FavoritesManager {
     favorite.updatedAt = new Date().toISOString();
     await this.saveFavorites();
     this.refreshTree();
-    vscode.window.setStatusBarMessage(
-      "TC Syslog: favorite updated",
-      2000
-    );
+    vscode.window.setStatusBarMessage("TC Syslog: favorite updated", 2000);
   }
 
   async removeFavorite(node) {
@@ -457,10 +454,7 @@ class FavoritesManager {
     this.entryMap.delete(favorite.id);
     await this.saveFavorites();
     this.refreshTree();
-    vscode.window.setStatusBarMessage(
-      "TC Syslog: favorite removed",
-      2000
-    );
+    vscode.window.setStatusBarMessage("TC Syslog: favorite removed", 2000);
   }
 
   async openFavoriteById(favoriteId) {
@@ -482,7 +476,10 @@ class FavoritesManager {
       ? {
           startLine: favorite.range.start?.line ?? targetLine,
           startCharacter: favorite.range.start?.character ?? 0,
-          endLine: favorite.range.end?.line ?? favorite.range.start?.line ?? targetLine,
+          endLine:
+            favorite.range.end?.line ??
+            favorite.range.start?.line ??
+            targetLine,
           endCharacter: favorite.range.end?.character ?? 0,
         }
       : undefined;
@@ -514,7 +511,7 @@ class SyslogController {
   constructor(context) {
     this.context = context;
     this.treeDataProvider = new SyslogTreeDataProvider();
-    this.treeView = vscode.window.createTreeView("tcSyslog.explorer", {
+    this.treeView = vscode.window.createTreeView("tcSyslogContent", {
       treeDataProvider: this.treeDataProvider,
     });
     this.treeView.message = "Open a .syslog file to see parsed categories.";
@@ -1203,13 +1200,19 @@ class SyslogController {
         const lineLength = document.lineAt(normalizedLine).text.length;
         const normalizedChar = Math.max(
           0,
-          Math.min(Number.isFinite(characterValue) ? characterValue : 0, lineLength)
+          Math.min(
+            Number.isFinite(characterValue) ? characterValue : 0,
+            lineLength
+          )
         );
         return new vscode.Position(normalizedLine, normalizedChar);
       };
       const selection = selectionRange
         ? new vscode.Selection(
-            makePosition(selectionRange.startLine, selectionRange.startCharacter),
+            makePosition(
+              selectionRange.startLine,
+              selectionRange.startCharacter
+            ),
             makePosition(selectionRange.endLine, selectionRange.endCharacter)
           )
         : (() => {
@@ -1344,7 +1347,8 @@ class SyslogController {
         this.latestParsed?.lines?.[line] ?? document.lineAt(line).text ?? "";
       textSnippet = parsedLine;
       const normalized = textSnippet.trim();
-      label = node.label?.trim() || truncate(normalized, 80) || `Line ${line + 1}`;
+      label =
+        node.label?.trim() || truncate(normalized, 80) || `Line ${line + 1}`;
       range = {
         start: { line, character: 0 },
         end: { line, character: parsedLine.length },
@@ -1808,7 +1812,6 @@ function buildNodeFallbackText(node) {
   return parts.join(parts.length > 1 ? " - " : "");
 }
 
-
 function buildTreeModel(parsed, resource) {
   if (!parsed) {
     return { resource, nodes: [] };
@@ -1820,9 +1823,7 @@ function buildTreeModel(parsed, resource) {
   const isValidLine = (line) =>
     typeof line === "number" && Number.isFinite(line) && line >= 0;
   const collectLinesFromObjects = (items) =>
-    items
-      .map((item) => item?.line)
-      .filter((line) => isValidLine(line));
+    items.map((item) => item?.line).filter((line) => isValidLine(line));
 
   if (parsed.header) {
     const headerPreview =
@@ -2191,7 +2192,10 @@ function buildTreeModel(parsed, resource) {
   }
 
   if (parsed.inlineSqlLines?.length) {
-    const inlineEntries = parsed.inlineSqlLines.slice(0, limits.inlineSqlEntries);
+    const inlineEntries = parsed.inlineSqlLines.slice(
+      0,
+      limits.inlineSqlEntries
+    );
     const inlineSqlNodes = inlineEntries.map((entry, index) => ({
       id: `inlineSql:${index}:${entry.line}`,
       label: truncate(
@@ -2234,7 +2238,6 @@ function buildTreeModel(parsed, resource) {
 
   return { resource, nodes };
 }
-
 
 function winBasename(filePath) {
   if (!filePath) {
