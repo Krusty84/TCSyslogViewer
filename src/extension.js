@@ -9,6 +9,7 @@ const DEFAULT_LIMITS = {
   sqlRowsPerDump: 200,
   journalRowsPerSection: 50,
   inlineSqlEntries: 200,
+  hierarchyTraceRows: 200,
 };
 const LEVEL_ORDER = ["FATAL", "ERROR", "WARN", "NOTE", "INFO", "DEBUG"];
 const LEVEL_CONFIG_OVERRIDES = { WARN: "WARNING" };
@@ -174,6 +175,7 @@ class MentionsTreeDataProvider {
       type: "summary",
       label: summaryText,
       tooltip: summaryText,
+      clipboardExclude: true,
     };
     return [summaryNode, ...matches];
   }
@@ -601,6 +603,10 @@ class SyslogController {
     this.sqlDecorationType = undefined;
     this.inlineSqlDecorationType = undefined;
     this.journalDecorationType = undefined;
+    this.hierarchyTraceDecorationType = undefined;
+    this.accessCheckDecorationType = undefined;
+    this.workflowHandlerDecorationType = undefined;
+    this.accessCheckDecorationType = undefined;
     this.baseFontDecorationType = undefined;
     this.latestParsed = null;
     this.favoritesManager = new FavoritesManager(this, context);
@@ -688,6 +694,10 @@ class SyslogController {
       sqlBackground: "#f8f53b7f",
       sqlInlineBackground: "#f8f53b7f",
       journalBackground: "#f8f53b7f",
+      hierarchyBackground: "#f8f53b40",
+      accessBackground: "#4b9eff33",
+      workflowBackground: "#5c98ff55",
+      accessBackground: "#4b9eff33",
     };
     const fontFamilySetting = config.get("font.family");
     const fontFamily =
@@ -826,6 +836,46 @@ class SyslogController {
       rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
     });
 
+    const hierarchyBackgroundSetting = config.get(
+      "colors.journal.hierarchy.background"
+    );
+    const hierarchyBackground =
+      typeof hierarchyBackgroundSetting === "string" && hierarchyBackgroundSetting
+        ? hierarchyBackgroundSetting
+        : tokenDefaults.hierarchyBackground ?? journalBackground;
+    this.hierarchyTraceDecorationType =
+      vscode.window.createTextEditorDecorationType({
+        backgroundColor: hierarchyBackground,
+        isWholeLine: true,
+        rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+      });
+
+    const accessBackgroundSetting = config.get("colors.access.background");
+    const accessBackground =
+      typeof accessBackgroundSetting === "string" && accessBackgroundSetting
+        ? accessBackgroundSetting
+        : tokenDefaults.accessBackground;
+    this.accessCheckDecorationType =
+      vscode.window.createTextEditorDecorationType({
+        backgroundColor: accessBackground,
+        isWholeLine: true,
+        rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+      });
+
+    const workflowBackgroundSetting = config.get(
+      "colors.workflow.background"
+    );
+    const workflowBackground =
+      typeof workflowBackgroundSetting === "string" && workflowBackgroundSetting
+        ? workflowBackgroundSetting
+        : tokenDefaults.workflowBackground;
+    this.workflowHandlerDecorationType =
+      vscode.window.createTextEditorDecorationType({
+        backgroundColor: workflowBackground,
+        isWholeLine: true,
+        rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+      });
+
     if (this.baseFontDecorationType) {
       this.baseFontDecorationType.dispose();
       this.baseFontDecorationType = undefined;
@@ -883,6 +933,18 @@ class SyslogController {
       this.journalDecorationType.dispose();
       this.journalDecorationType = undefined;
     }
+    if (this.hierarchyTraceDecorationType) {
+      this.hierarchyTraceDecorationType.dispose();
+      this.hierarchyTraceDecorationType = undefined;
+    }
+    if (this.accessCheckDecorationType) {
+      this.accessCheckDecorationType.dispose();
+      this.accessCheckDecorationType = undefined;
+    }
+    if (this.workflowHandlerDecorationType) {
+      this.workflowHandlerDecorationType.dispose();
+      this.workflowHandlerDecorationType = undefined;
+    }
     if (this.baseFontDecorationType) {
       this.baseFontDecorationType.dispose();
       this.baseFontDecorationType = undefined;
@@ -909,6 +971,9 @@ class SyslogController {
     const inlineSqlLinesSeen = new Set();
     const journalRanges = [];
     const sqlRanges = [];
+    const hierarchyRanges = [];
+    const accessRanges = [];
+    const workflowRanges = [];
 
     for (const entry of parsed.logLines ?? []) {
       if (!entry.level) {
@@ -998,6 +1063,22 @@ class SyslogController {
       );
     }
 
+    for (const trace of parsed.journalHierarchyTraces ?? []) {
+      const startLine = trace.line ?? 0;
+      const endLine = trace.endLine ?? trace.line ?? startLine;
+      const normalizedStart = Math.max(0, startLine);
+      const normalizedEnd = Math.max(normalizedStart, endLine);
+      const endLineLength = parsed.lines?.[normalizedEnd]?.length ?? 0;
+      hierarchyRanges.push(
+        new vscode.Range(
+          normalizedStart,
+          0,
+          normalizedEnd,
+          Math.max(0, endLineLength)
+        )
+      );
+    }
+
     for (const dump of parsed.sqlDumps ?? []) {
       const startLine = dump.line ?? 0;
       const endLine = dump.endLine ?? dump.line ?? 0;
@@ -1012,6 +1093,30 @@ class SyslogController {
           Math.max(0, endLineLength)
         )
       );
+    }
+
+    for (const access of parsed.accessChecks ?? []) {
+      const lineIndex = access.line ?? 0;
+      const normalizedLine = Math.max(0, lineIndex);
+      const length = parsed.lines?.[normalizedLine]?.length ?? 0;
+      accessRanges.push(
+        new vscode.Range(normalizedLine, 0, normalizedLine, Math.max(0, length))
+      );
+    }
+
+    for (const handler of parsed.workflowHandlers ?? []) {
+      const startLine = Math.max(0, handler.line ?? 0);
+      const endLine = Math.max(startLine, handler.endLine ?? handler.line ?? startLine);
+      const startLength = parsed.lines?.[startLine]?.length ?? 0;
+      workflowRanges.push(
+        new vscode.Range(startLine, 0, startLine, Math.max(0, startLength))
+      );
+      if (endLine !== startLine) {
+        const endLength = parsed.lines?.[endLine]?.length ?? 0;
+        workflowRanges.push(
+          new vscode.Range(endLine, 0, endLine, Math.max(0, endLength))
+        );
+      }
     }
 
     const headerRanges = (parsed.header?.lines ?? []).map((lineInfo) => {
@@ -1086,6 +1191,24 @@ class SyslogController {
       if (this.envValueDecorationType) {
         editor.setDecorations(this.envValueDecorationType, envValueRanges);
       }
+      if (this.hierarchyTraceDecorationType) {
+        editor.setDecorations(
+          this.hierarchyTraceDecorationType,
+          hierarchyRanges
+        );
+      }
+      if (this.accessCheckDecorationType) {
+        editor.setDecorations(
+          this.accessCheckDecorationType,
+          accessRanges
+        );
+      }
+      if (this.workflowHandlerDecorationType) {
+        editor.setDecorations(
+          this.workflowHandlerDecorationType,
+          workflowRanges
+        );
+      }
       if (this.baseFontDecorationType) {
         const doc = editor.document;
         if (doc.lineCount > 0) {
@@ -1133,6 +1256,15 @@ class SyslogController {
       }
       if (this.journalDecorationType) {
         editor.setDecorations(this.journalDecorationType, []);
+      }
+      if (this.hierarchyTraceDecorationType) {
+        editor.setDecorations(this.hierarchyTraceDecorationType, []);
+      }
+      if (this.accessCheckDecorationType) {
+        editor.setDecorations(this.accessCheckDecorationType, []);
+      }
+      if (this.workflowHandlerDecorationType) {
+        editor.setDecorations(this.workflowHandlerDecorationType, []);
       }
       if (this.headerDecorationType) {
         editor.setDecorations(this.headerDecorationType, []);
@@ -1210,7 +1342,6 @@ class SyslogController {
     this.mentionsDataProvider.clear();
     if (this.mentionsView) {
       this.mentionsView.message = "Run Find All Mentions to populate results.";
-      this.mentionsView.description = undefined;
     }
   }
 
@@ -1593,7 +1724,6 @@ class SyslogController {
           needle,
           60
         )}".`;
-        this.mentionsView.description = `0 • "${truncate(needle, 30)}"`;
       }
       return;
     }
@@ -1619,13 +1749,6 @@ class SyslogController {
             60
           )}".`
         : undefined;
-      const countLabel = extraMatches
-        ? `${matches.length}+`
-        : String(matches.length);
-      this.mentionsView.description = `${countLabel} • "${truncate(
-        needle,
-        30
-      )}"`;
     }
 
     await vscode.commands.executeCommand(
@@ -1716,6 +1839,8 @@ class SyslogController {
       sqlBackground: "colors.sql.background",
       sqlInlineBackground: "colors.sql.inline.background",
       journalBackground: "colors.journal.background",
+      hierarchyBackground: "colors.journal.hierarchy.background",
+      accessBackground: "colors.access.background",
     };
     for (const [tokenKey, configKey] of Object.entries(tokenConfigMap)) {
       const value = config.get(configKey);
@@ -1754,6 +1879,11 @@ class SyslogController {
       ["colors.sql.background", values?.sqlBackground],
       ["colors.sql.inline.background", values?.sqlInlineBackground],
       ["colors.journal.background", values?.journalBackground],
+      [
+        "colors.journal.hierarchy.background",
+        values?.hierarchyBackground,
+      ],
+      ["colors.access.background", values?.accessBackground],
     ];
     for (const [key, value] of mapping) {
       if (typeof value === "string" && value) {
@@ -1842,6 +1972,10 @@ function getExplorerLimits() {
     inlineSqlEntries: readLimit(
       "limits.inlineSqlEntries",
       DEFAULT_LIMITS.inlineSqlEntries
+    ),
+    hierarchyTraceRows: readLimit(
+      "limits.hierarchyTraceRows",
+      DEFAULT_LIMITS.hierarchyTraceRows
     ),
   };
 }
@@ -2238,13 +2372,14 @@ function buildTreeModel(parsed, resource) {
     });
   }
 
+  const journalNodes = [];
   if (parsed.journalSections?.length) {
     const journalTypeLabels = {
       summary: "Summary",
       topLevel: "Top-Level Functions",
       allFunctions: "All Functions",
     };
-    const journalNodes = (parsed.journalSections ?? []).map(
+    const sectionNodes = (parsed.journalSections ?? []).map(
       (section, index) => {
         const typeLabel = journalTypeLabels[section.type] ?? "Section";
         const label = `${typeLabel} #${index + 1}`;
@@ -2318,11 +2453,141 @@ function buildTreeModel(parsed, resource) {
         };
       }
     );
+    journalNodes.push(...sectionNodes);
+  }
+
+  if (parsed.journalHierarchyTraces?.length) {
+    const hierarchyNodes = parsed.journalHierarchyTraces.map((trace, index) => {
+      const startLine = trace.line ?? 0;
+      const endLine = trace.endLine ?? trace.line ?? startLine;
+      const description =
+        endLine > startLine
+          ? `Lines ${startLine + 1}-${endLine + 1}`
+          : `Line ${startLine + 1}`;
+      const summaryDescription = description;
+      const displayRows = (trace.rows ?? []).slice(0, limits.hierarchyTraceRows);
+      const rowChildren = displayRows.map((row, rowIndex) => {
+        const labelText = truncate(row.routine ?? `Entry ${rowIndex + 1}`, 100);
+        return {
+          id: `hierarchy:${index}:row:${rowIndex}:${row.line}`,
+          label: labelText,
+          description: `Line ${row.line + 1}`,
+          tooltip: row.raw?.trim() ?? row.text ?? '',
+          line: row.line,
+          contextValue: NODE_CONTEXT.ENTRY,
+          icon: "triangle-right",
+          clipboardItems: row.raw ? [{ text: row.raw }] : undefined,
+        };
+      });
+      if ((trace.rows?.length ?? 0) > limits.hierarchyTraceRows) {
+        rowChildren.push({
+          id: `hierarchy:${index}:overflow`,
+          label: `... ${
+            trace.rows.length - limits.hierarchyTraceRows
+          } more entries`,
+          description: "Use Find in Editor for additional entries",
+          icon: "ellipsis",
+          clipboardExclude: true,
+        });
+      }
+
+      const clipboardLines = [];
+      for (
+        let lineIndex = Math.max(0, startLine);
+        lineIndex <= endLine;
+        lineIndex += 1
+      ) {
+        clipboardLines.push(lineIndex);
+      }
+      return {
+        id: `hierarchy:${index}:${startLine}`,
+        label: `Hierarchy Trace #${index + 1}`,
+        description: summaryDescription,
+        line: startLine,
+        children: rowChildren,
+        icon: "graph",
+        contextValue: NODE_CONTEXT.GROUP,
+        clipboardLines: clipboardLines.length ? clipboardLines : undefined,
+        tooltip: `Lines ${startLine + 1}-${endLine + 1}`,
+      };
+    });
+    journalNodes.push(...hierarchyNodes);
+  }
+
+  if (journalNodes.length) {
     nodes.push({
       id: "root:journal",
       label: `Journalled Times (${journalNodes.length})`,
       children: journalNodes,
       icon: "graph",
+      contextValue: NODE_CONTEXT.CATEGORY,
+    });
+  }
+
+  if (parsed.accessChecks?.length) {
+    const accessNodes = parsed.accessChecks
+      .slice()
+      .sort((a, b) => (a.line ?? 0) - (b.line ?? 0))
+      .map((entry, index) => {
+        const mode = entry.mode ? entry.mode.toUpperCase() : "(unknown)";
+        const label = `${mode} on ${entry.target ?? "(unknown)"}`;
+        return {
+          id: `access:${index}:${entry.line}`,
+          label,
+          description: `Line ${entry.line + 1}`,
+          tooltip: entry.raw ?? label,
+          line: entry.line,
+          icon: "shield",
+          contextValue: NODE_CONTEXT.ENTRY,
+          clipboardItems: entry.raw ? [{ text: entry.raw }] : undefined,
+        };
+      });
+    nodes.push({
+      id: "root:access",
+      label: `Check Access Privilege (${accessNodes.length})`,
+      children: accessNodes,
+      icon: "shield",
+      contextValue: NODE_CONTEXT.CATEGORY,
+    });
+  }
+
+  if (parsed.workflowHandlers?.length) {
+    const handlerNodes = parsed.workflowHandlers.map((entry, index) => {
+      const label = truncate(entry.functionName || `Handler #${index + 1}`, 80);
+      const startLine = Math.max(0, entry.line ?? 0);
+      const endLine = Math.max(startLine, entry.endLine ?? entry.line ?? startLine);
+      const description =
+        endLine === startLine
+          ? `Line ${startLine + 1}`
+          : `Lines ${startLine + 1}-${endLine + 1}`;
+      const tooltipParts = [
+        `Function: ${entry.functionName ?? "(unknown)"}`,
+        description,
+      ];
+      if (entry.filePath) {
+        tooltipParts.push(`File: ${entry.filePath}`);
+      }
+      const tooltip = tooltipParts.join("\n");
+      const clipboardLines = [];
+      for (let lineIndex = startLine; lineIndex <= endLine; lineIndex += 1) {
+        clipboardLines.push(lineIndex);
+      }
+      return {
+        id: `handler:${index}:${entry.line}`,
+        label,
+        description,
+        tooltip,
+        line: entry.line,
+        icon: "beaker",
+        contextValue: NODE_CONTEXT.ENTRY,
+        clipboardLines,
+      };
+    });
+    nodes.push({
+      id: "root:workflowHandlers",
+      label: `WF Handler Flow (${handlerNodes.length})`,
+      children: handlerNodes,
+      icon: "beaker",
       contextValue: NODE_CONTEXT.CATEGORY,
     });
   }

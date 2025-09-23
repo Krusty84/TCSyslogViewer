@@ -246,6 +246,21 @@
           "default": "#f8f53b7f",
           "description": "Journalling section background color"
         },
+        "tcSyslog.colors.journal.hierarchy.background": {
+          "type": "string",
+          "default": "#f8f53b40",
+          "description": "Journal hierarchy trace background color"
+        },
+        "tcSyslog.colors.access.background": {
+          "type": "string",
+          "default": "#4b9eff33",
+          "description": "Access privilege check background color"
+        },
+        "tcSyslog.colors.workflow.background": {
+          "type": "string",
+          "default": "#5c98ff55",
+          "description": "Workflow handler enter/leave background color"
+        },
         "tcSyslog.limits.logLevelEntries": {
           "type": "integer",
           "default": 200,
@@ -269,6 +284,12 @@
           "default": 200,
           "minimum": 1,
           "description": "Maximum inline SQL entries listed in the explorer."
+        },
+        "tcSyslog.limits.hierarchyTraceRows": {
+          "type": "integer",
+          "default": 200,
+          "minimum": 1,
+          "description": "Maximum rows displayed for each journal hierarchy trace section."
         }
       }
     },

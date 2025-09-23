@@ -73,6 +73,9 @@ class CollectingVisitor extends TeamcenterLogVisitor {
       dllSections: [],
       sqlDumps: [],
       journalSections: [],
+      journalHierarchyTraces: [],
+      accessChecks: [],
+      workflowHandlers: [],
       pomStats: [],
       endSessions: [],
       truncated: [],
@@ -391,6 +394,129 @@ function collectJournalRows(lines, start, end) {
   return rows;
 }
 
+function collectJournalHierarchyTraces(lines) {
+  const sections = [];
+  const startPattern = /^START JOURNAL_HIERARCHY_TRACE\b/i;
+  const endPattern = /^END JOURNAL_HIERARCHY_TRACE\b/i;
+  const rowRegex = /^\s*(\d+)\s+(\d+)\s+([0-9]+(?:\.[0-9]+)?)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.*)$/;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const raw = lines[index] ?? '';
+    const trimmed = raw.trim();
+    if (!startPattern.test(trimmed)) {
+      continue;
+    }
+
+    const version = trimmed.replace(/^START JOURNAL_HIERARCHY_TRACE\s*/i, '').trim() || null;
+    let cursor = index + 1;
+    let endLine = index;
+    let header = null;
+    const rows = [];
+
+    while (cursor < lines.length) {
+      const current = lines[cursor] ?? '';
+      const currentTrimmed = current.trim();
+      if (endPattern.test(currentTrimmed)) {
+        endLine = cursor;
+        break;
+      }
+      if (!header && currentTrimmed.startsWith('%Total')) {
+        header = currentTrimmed;
+      } else {
+        const match = rowRegex.exec(current);
+        if (match) {
+          rows.push({
+            line: cursor,
+            totalPercent: Number(match[1]),
+            parentPercent: Number(match[2]),
+            time: Number(match[3]),
+            dbTrips: Number(match[4]),
+            callCount: Number(match[5]),
+            calls: Number(match[5]),
+            depth: Number(match[6]),
+            routine: match[7].trim(),
+            raw: current,
+            text: currentTrimmed,
+          });
+        }
+      }
+      cursor += 1;
+    }
+
+    if (cursor >= lines.length) {
+      endLine = lines.length - 1;
+    }
+
+    sections.push({
+      line: index,
+      endLine,
+      version,
+      header,
+      rows,
+    });
+    index = Math.max(index, endLine);
+  }
+
+  return sections;
+}
+
+function collectAccessChecks(lines) {
+  const entries = [];
+  const regex = /^AM_check_priv\s*\(([^)]+)\)\s*on\s*(\S+)/i;
+  for (let line = 0; line < lines.length; line += 1) {
+    const raw = lines[line] ?? '';
+    const match = regex.exec(raw);
+    if (!match) {
+      continue;
+    }
+    const mode = match[1]?.trim() ?? '';
+    const target = match[2]?.trim() ?? '';
+    entries.push({
+      line,
+      raw,
+      mode,
+      target,
+    });
+  }
+  return entries;
+}
+
+function collectWorkflowHandlers(lines) {
+  const entries = [];
+  const enterPattern = /^-->\s+ENTER\s+Function\s+"([^"]+)"\s+\{\s*\(File\s+\[(.*?)\]\)/i;
+  const leavePattern = /^<--\s+LEAVE\s+Function\s+"([^"]+)"/i;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const raw = lines[index] ?? '';
+    const enterMatch = enterPattern.exec(raw);
+    if (!enterMatch) {
+      continue;
+    }
+
+    const functionName = enterMatch[1]?.trim() ?? '';
+    const filePath = enterMatch[2]?.trim() ?? '';
+
+    let leaveLine = index;
+    for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
+      const leaveRaw = lines[cursor] ?? '';
+      if (leavePattern.test(leaveRaw)) {
+        leaveLine = cursor;
+        break;
+      }
+    }
+
+    entries.push({
+      line: index,
+      endLine: leaveLine,
+      functionName,
+      filePath,
+      raw,
+    });
+  }
+
+  return entries;
+}
+
 function collectInlineSqlLines(lines) {
   const matches = [];
   for (let i = 0; i < lines.length; i += 1) {
@@ -533,8 +659,10 @@ export function parseTeamcenterLog(content) {
   ].sort((a, b) => (a.line ?? 0) - (b.line ?? 0));
 
   result.journalSections = collectJournalSections(lines);
+  result.journalHierarchyTraces = collectJournalHierarchyTraces(lines);
+  result.accessChecks = collectAccessChecks(lines);
+  result.workflowHandlers = collectWorkflowHandlers(lines);
   result.lines = lines;
 
   return result;
 }
-
