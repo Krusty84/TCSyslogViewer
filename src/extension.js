@@ -585,10 +585,15 @@ class SyslogController {
   constructor(context) {
     this.context = context;
     this.treeDataProvider = new SyslogTreeDataProvider();
-    this.treeView = vscode.window.createTreeView("tcSyslogContent", {
+    this.treeView = vscode.window.createTreeView("tcSyslogBasic", {
       treeDataProvider: this.treeDataProvider,
     });
     this.treeView.message = "Open a .syslog file to see parsed categories.";
+    this.extraTreeDataProvider = new SyslogTreeDataProvider();
+    this.extraTreeView = vscode.window.createTreeView("tcSyslogExtra", {
+      treeDataProvider: this.extraTreeDataProvider,
+    });
+    this.extraTreeView.message = "Open a .syslog file to see extra categories.";
     this.currentUri = null;
     this.refreshTimer = undefined;
     this.pendingDocument = undefined;
@@ -616,6 +621,7 @@ class SyslogController {
     });
     this.mentionsView.message = "Run Find All Mentions to populate results.";
     this.context.subscriptions.push(this.treeView);
+    this.context.subscriptions.push(this.extraTreeView);
     this.context.subscriptions.push({
       dispose: () => this.disposeDecorationTypes(),
     });
@@ -1337,7 +1343,9 @@ class SyslogController {
     this.currentUri = null;
     this.latestParsed = null;
     this.treeDataProvider.clear();
+    this.extraTreeDataProvider.clear();
     this.treeView.message = message;
+    this.extraTreeView.message = "Open a .syslog file to see extra categories.";
     this.favoritesManager.clear();
     this.mentionsDataProvider.clear();
     if (this.mentionsView) {
@@ -1370,8 +1378,10 @@ class SyslogController {
       parsed = parseTeamcenterLog(content);
     } catch (error) {
       this.treeDataProvider.clear();
+      this.extraTreeDataProvider.clear();
       const message = error instanceof Error ? error.message : String(error);
       this.treeView.message = `Failed to parse syslog: ${message}`;
+      this.extraTreeView.message = "Open a .syslog file to see extra categories.";
       this.clearDecorations(document.uri.toString());
       this.latestParsed = null;
       vscode.window.showErrorMessage(
@@ -1381,9 +1391,28 @@ class SyslogController {
     }
     this.currentUri = document.uri;
     this.latestParsed = parsed;
-    this.treeView.message = undefined;
     const model = buildTreeModel(parsed, document.uri);
-    this.treeDataProvider.setModel(model);
+    const basicIds = new Set(["root:overview", "root:levels"]);
+    const basicNodes = (model.nodes ?? []).filter((node) =>
+      basicIds.has(node.id)
+    );
+    const extraNodes = (model.nodes ?? []).filter(
+      (node) => !basicIds.has(node.id)
+    );
+    this.treeDataProvider.setModel({
+      resource: model.resource,
+      nodes: basicNodes,
+    });
+    this.extraTreeDataProvider.setModel({
+      resource: model.resource,
+      nodes: extraNodes,
+    });
+    this.treeView.message = basicNodes.length
+      ? undefined
+      : "No basic content available.";
+    this.extraTreeView.message = extraNodes.length
+      ? undefined
+      : "No extra content available.";
     this.applyDecorations(document, parsed);
     void this.favoritesManager.setActiveDocument(document, parsed);
   }
@@ -1455,6 +1484,10 @@ class SyslogController {
     const selection = this.treeView?.selection;
     if (selection && selection.length) {
       return selection[0];
+    }
+    const extraSelection = this.extraTreeView?.selection;
+    if (extraSelection && extraSelection.length) {
+      return extraSelection[0];
     }
     return null;
   }

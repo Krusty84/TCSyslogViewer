@@ -23,7 +23,8 @@
     "onCommand:tcSyslog.removeFavorite",
     "onCommand:tcSyslog.openFavorite",
     "onCommand:tcSyslog.openThemePanel",
-    "onView:tcSyslogContent",
+    "onView:tcSyslogBasic",
+    "onView:tcSyslogExtra",
     "onView:tcSyslogFavorites",
     "workspaceContains:**/*.syslog",
     "onLanguage:teamcenter-syslog"
@@ -86,8 +87,12 @@
     "views": {
       "tcSyslogSidebar": [
         {
-          "id": "tcSyslogContent",
-          "name": "Content"
+          "id": "tcSyslogBasic",
+          "name": "Basic Content"
+        },
+        {
+          "id": "tcSyslogExtra",
+          "name": "Extra Content"
         },
         {
           "id": "tcSyslogFavorites",
@@ -139,19 +144,35 @@
       "view/item/context": [
         {
           "command": "tcSyslog.copyCategory",
-          "when": "view == tcSyslogContent && viewItem == syslogCategory"
+          "when": "view == tcSyslogBasic && viewItem == syslogCategory"
         },
         {
           "command": "tcSyslog.copyCategory",
-          "when": "view == tcSyslogContent && viewItem == syslogGroup"
+          "when": "view == tcSyslogExtra && viewItem == syslogCategory"
+        },
+        {
+          "command": "tcSyslog.copyCategory",
+          "when": "view == tcSyslogBasic && viewItem == syslogGroup"
+        },
+        {
+          "command": "tcSyslog.copyCategory",
+          "when": "view == tcSyslogExtra && viewItem == syslogGroup"
         },
         {
           "command": "tcSyslog.copyEntry",
-          "when": "view == tcSyslogContent && viewItem == syslogEntry"
+          "when": "view == tcSyslogBasic && viewItem == syslogEntry"
+        },
+        {
+          "command": "tcSyslog.copyEntry",
+          "when": "view == tcSyslogExtra && viewItem == syslogEntry"
         },
         {
           "command": "tcSyslog.addFavorite",
-          "when": "view == tcSyslogContent && viewItem == syslogEntry"
+          "when": "view == tcSyslogBasic && viewItem == syslogEntry"
+        },
+        {
+          "command": "tcSyslog.addFavorite",
+          "when": "view == tcSyslogExtra && viewItem == syslogEntry"
         },
         {
           "command": "tcSyslog.editFavorite",
