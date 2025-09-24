@@ -24,7 +24,6 @@
     "onCommand:tcSyslog.openFavorite",
     "onCommand:tcSyslog.closeMentionsSession",
     "onCommand:tcSyslog.findAllMentionsInEditor",
-    "onCommand:tcSyslog.openThemePanel",
     "onView:tcSyslogBasic",
     "onView:tcSyslogExtra",
     "onView:tcSyslogFavorites",
@@ -64,10 +63,6 @@
       {
         "command": "tcSyslog.closeMentionsSession",
         "title": "TC Syslog: Close Mentions Result"
-      },
-      {
-        "command": "tcSyslog.openThemePanel",
-        "title": "TC Syslog: Colors & Fonts"
       },
       {
         "command": "tcSyslog.findAllMentions",
@@ -141,10 +136,6 @@
         {
           "command": "tcSyslog.removeFavorite",
           "when": "false"
-        },
-        {
-          "command": "tcSyslog.openThemePanel",
-          "when": "true"
         },
         {
           "command": "tcSyslog.findAllMentions",
@@ -224,32 +215,32 @@
       "title": "TC Syslog Viewer",
       "properties": {
         "tcSyslog.colors.level.INFO.fg": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#1479ff",
           "description": "INFO text color"
         },
         "tcSyslog.colors.level.WARNING.fg": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#b8860b",
           "description": "WARNING text color"
         },
         "tcSyslog.colors.level.ERROR.fg": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#ff4242",
           "description": "ERROR text color"
         },
         "tcSyslog.colors.level.NOTE.fg": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#3aa669",
           "description": "NOTE text color"
         },
         "tcSyslog.colors.level.DEBUG.fg": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#888888",
           "description": "DEBUG text color"
         },
         "tcSyslog.colors.level.FATAL.fg": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#ff00aa",
           "description": "FATAL text color"
         },
@@ -264,79 +255,49 @@
           "description": "Font size (px) for entry preview"
         },
         "tcSyslog.colors.timestamp.fg": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#9aa0a6",
           "description": "Timestamp text color"
         },
         "tcSyslog.colors.id.fg": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#c586c0",
           "description": "Identifier text color"
         },
         "tcSyslog.colors.message.fg": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#d4d4d4",
           "description": "Message text color"
         },
         "tcSyslog.colors.sql.background": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#f8f53b7f",
           "description": "SQL dump background color"
         },
         "tcSyslog.colors.sql.inline.background": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#f8f53b7f",
           "description": "Inline SQL background color"
         },
         "tcSyslog.colors.journal.background": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#f8f53b7f",
           "description": "Journalling section background color"
         },
         "tcSyslog.colors.journal.hierarchy.background": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#f8f53b40",
           "description": "Journal hierarchy trace background color"
         },
         "tcSyslog.colors.access.background": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#4b9eff33",
           "description": "Access privilege check background color"
         },
         "tcSyslog.colors.workflow.background": {
-          "type": "string",
+          "type": "color-hex",
           "default": "#5c98ff55",
           "description": "Workflow handler enter/leave background color"
-        },
-        "tcSyslog.limits.logLevelEntries": {
-          "type": "integer",
-          "default": 200,
-          "minimum": 1,
-          "description": "Maximum log entries per level shown under the Log Levels category."
-        },
-        "tcSyslog.limits.sqlRowsPerDump": {
-          "type": "integer",
-          "default": 200,
-          "minimum": 1,
-          "description": "Maximum rows per SQL profile dump shown in the explorer."
-        },
-        "tcSyslog.limits.journalRowsPerSection": {
-          "type": "integer",
-          "default": 50,
-          "minimum": 1,
-          "description": "Maximum journaled function rows displayed per journal section."
-        },
-        "tcSyslog.limits.inlineSqlEntries": {
-          "type": "integer",
-          "default": 200,
-          "minimum": 1,
-          "description": "Maximum inline SQL entries listed in the explorer."
-        },
-        "tcSyslog.limits.hierarchyTraceRows": {
-          "type": "integer",
-          "default": 200,
-          "minimum": 1,
-          "description": "Maximum rows displayed for each journal hierarchy trace section."
         }
       }
     },

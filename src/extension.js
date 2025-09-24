@@ -1,16 +1,8 @@
 import * as vscode from "vscode";
-import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { TextDecoder, TextEncoder } from "node:util";
 import { parseTeamcenterLog } from "./parse/teamcenterLogParser.js";
 
-const DEFAULT_LIMITS = {
-  logLevelEntries: 200,
-  sqlRowsPerDump: 200,
-  journalRowsPerSection: 50,
-  inlineSqlEntries: 200,
-  hierarchyTraceRows: 200,
-};
 const LEVEL_ORDER = ["FATAL", "ERROR", "WARN", "NOTE", "INFO", "DEBUG"];
 const LEVEL_CONFIG_OVERRIDES = { WARN: "WARNING" };
 const LEVEL_ICONS = {
@@ -183,7 +175,9 @@ class MentionsTreeDataProvider {
   }
 
   removeSession(sessionId) {
-    const index = this.sessions.findIndex((session) => session.id === sessionId);
+    const index = this.sessions.findIndex(
+      (session) => session.id === sessionId
+    );
     if (index === -1) {
       return null;
     }
@@ -307,7 +301,9 @@ class MentionsTreeDataProvider {
   }
 
   generateId() {
-    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    return `${Date.now().toString(36)}-${Math.random()
+      .toString(36)
+      .slice(2, 10)}`;
   }
 }
 
@@ -694,7 +690,6 @@ class SyslogController {
     this.currentUri = null;
     this.refreshTimer = undefined;
     this.pendingDocument = undefined;
-    this.themePanel = null;
     this.levelDecorationTypes = new Map();
     this.headerDecorationType = undefined;
     this.envKeyDecorationType = undefined;
@@ -717,6 +712,7 @@ class SyslogController {
       treeDataProvider: this.mentionsDataProvider,
     });
     this.mentionsView.message = "Run Find All Mentions to populate results.";
+    this.previewDocuments = new Set();
     this.context.subscriptions.push(this.treeView);
     this.context.subscriptions.push(this.extraTreeView);
     this.context.subscriptions.push({
@@ -728,7 +724,6 @@ class SyslogController {
 
     this.context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((event) => {
-        let refreshTree = false;
         if (this.shouldReloadDecorations(event)) {
           this.reloadDecorationTypes();
           if (this.currentUri && this.latestParsed) {
@@ -739,13 +734,6 @@ class SyslogController {
               this.applyDecorations(document, this.latestParsed);
             }
           }
-        }
-        if (event?.affectsConfiguration("tcSyslog.limits")) {
-          refreshTree = true;
-        }
-        if (refreshTree && this.currentUri && this.latestParsed) {
-          const model = buildTreeModel(this.latestParsed, this.currentUri);
-          this.treeDataProvider.setModel(model);
         }
       })
     );
@@ -943,7 +931,8 @@ class SyslogController {
       "colors.journal.hierarchy.background"
     );
     const hierarchyBackground =
-      typeof hierarchyBackgroundSetting === "string" && hierarchyBackgroundSetting
+      typeof hierarchyBackgroundSetting === "string" &&
+      hierarchyBackgroundSetting
         ? hierarchyBackgroundSetting
         : tokenDefaults.hierarchyBackground ?? journalBackground;
     this.hierarchyTraceDecorationType =
@@ -965,9 +954,7 @@ class SyslogController {
         rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
       });
 
-    const workflowBackgroundSetting = config.get(
-      "colors.workflow.background"
-    );
+    const workflowBackgroundSetting = config.get("colors.workflow.background");
     const workflowBackground =
       typeof workflowBackgroundSetting === "string" && workflowBackgroundSetting
         ? workflowBackgroundSetting
@@ -1209,7 +1196,10 @@ class SyslogController {
 
     for (const handler of parsed.workflowHandlers ?? []) {
       const startLine = Math.max(0, handler.line ?? 0);
-      const endLine = Math.max(startLine, handler.endLine ?? handler.line ?? startLine);
+      const endLine = Math.max(
+        startLine,
+        handler.endLine ?? handler.line ?? startLine
+      );
       const startLength = parsed.lines?.[startLine]?.length ?? 0;
       workflowRanges.push(
         new vscode.Range(startLine, 0, startLine, Math.max(0, startLength))
@@ -1301,10 +1291,7 @@ class SyslogController {
         );
       }
       if (this.accessCheckDecorationType) {
-        editor.setDecorations(
-          this.accessCheckDecorationType,
-          accessRanges
-        );
+        editor.setDecorations(this.accessCheckDecorationType, accessRanges);
       }
       if (this.workflowHandlerDecorationType) {
         editor.setDecorations(
@@ -1396,6 +1383,10 @@ class SyslogController {
     }
 
     if (editor && !isSyslogDocument(editor.document) && this.currentUri) {
+      const uriKey = editor.document.uri.toString();
+      if (this.previewDocuments.has(uriKey)) {
+        return;
+      }
       this.clearView("Open a .syslog file to see parsed categories.");
     }
   }
@@ -1407,10 +1398,12 @@ class SyslogController {
   }
 
   handleDocumentClosed(document) {
-    if (
-      this.currentUri &&
-      document.uri.toString() === this.currentUri.toString()
-    ) {
+    const uriKey = document.uri.toString();
+    if (this.previewDocuments.has(uriKey)) {
+      this.previewDocuments.delete(uriKey);
+      return;
+    }
+    if (this.currentUri && uriKey === this.currentUri.toString()) {
       this.clearView("Open a .syslog file to see parsed categories.");
     }
   }
@@ -1478,7 +1471,8 @@ class SyslogController {
       this.extraTreeDataProvider.clear();
       const message = error instanceof Error ? error.message : String(error);
       this.treeView.message = `Failed to parse syslog: ${message}`;
-      this.extraTreeView.message = "Open a .syslog file to see extra categories.";
+      this.extraTreeView.message =
+        "Open a .syslog file to see extra categories.";
       this.clearDecorations(document.uri.toString());
       this.latestParsed = null;
       vscode.window.showErrorMessage(
@@ -1996,7 +1990,9 @@ class SyslogController {
           match.length
         );
         const location = `${absolutePath}:${lineNumber}:${columnNumber}`;
-        return `${index + 1}. Line ${lineNumber}, Column ${columnNumber}\n   Location: ${location}\n   ${highlighted}`;
+        return `${
+          index + 1
+        }. Line ${lineNumber}, Column ${columnNumber}\n   Location: ${location}\n   ${highlighted}`;
       })
       .join("\n\n");
 
@@ -2019,9 +2015,14 @@ class SyslogController {
     const untitledUri = vscode.Uri.parse(
       `untitled:Mentions-${label}-${Date.now()}.txt`
     );
+    let uriKey;
 
     try {
-      const targetDocument = await vscode.workspace.openTextDocument(untitledUri);
+      const targetDocument = await vscode.workspace.openTextDocument(
+        untitledUri
+      );
+      uriKey = targetDocument.uri.toString();
+      this.previewDocuments.add(uriKey);
       const editor = await vscode.window.showTextDocument(targetDocument, {
         preview: false,
         viewColumn: vscode.ViewColumn.Beside,
@@ -2038,8 +2039,12 @@ class SyslogController {
         vscode.window.showWarningMessage(
           "TC Syslog: unable to populate mentions document."
         );
+        this.previewDocuments.delete(uriKey);
       }
     } catch (error) {
+      if (uriKey) {
+        this.previewDocuments.delete(uriKey);
+      }
       vscode.window.showErrorMessage(
         `TC Syslog: unable to open mentions document - ${
           error instanceof Error ? error.message : String(error)
@@ -2073,7 +2078,9 @@ class SyslogController {
               return null;
             }
             const text =
-              typeof entry.text === "string" ? entry.text : String(entry.text ?? "");
+              typeof entry.text === "string"
+                ? entry.text
+                : String(entry.text ?? "");
             const line =
               typeof entry.line === "number" && Number.isFinite(entry.line)
                 ? entry.line
@@ -2091,7 +2098,9 @@ class SyslogController {
     const hasContent = normalizedEntries.some((entry) => entry.text.length);
 
     const resource =
-      options.resource instanceof vscode.Uri ? options.resource : this.currentUri;
+      options.resource instanceof vscode.Uri
+        ? options.resource
+        : this.currentUri;
     const relativePath = resource
       ? vscode.workspace.asRelativePath(resource, false)
       : undefined;
@@ -2147,15 +2156,17 @@ class SyslogController {
         : prefix;
 
     const sanitizedPrefix = sanitizeForUntitledLabel(prefix);
-    const sanitizedLabel = truncate(
-      sanitizeForUntitledLabel(baseLabel),
-      32
-    );
-    const fileLabel = `${sanitizedPrefix}-${sanitizedLabel || "data"}-${Date.now()}`;
+    const sanitizedLabel = truncate(sanitizeForUntitledLabel(baseLabel), 32);
+    const fileLabel = `${sanitizedPrefix}-${
+      sanitizedLabel || "data"
+    }-${Date.now()}`;
     const untitledUri = vscode.Uri.parse(`untitled:${fileLabel}.txt`);
+    let uriKey;
 
     try {
       const document = await vscode.workspace.openTextDocument(untitledUri);
+      uriKey = document.uri.toString();
+      this.previewDocuments.add(uriKey);
       const editor = await vscode.window.showTextDocument(document, {
         preview: false,
         viewColumn: vscode.ViewColumn.Beside,
@@ -2167,6 +2178,7 @@ class SyslogController {
         vscode.window.showWarningMessage(
           "TC Syslog: unable to open preview editor."
         );
+        this.previewDocuments.delete(uriKey);
         return;
       }
       const start = new vscode.Position(0, 0);
@@ -2180,178 +2192,11 @@ class SyslogController {
         vscode.window.setStatusBarMessage(options.statusMessage, 2500);
       }
     } catch (error) {
+      if (uriKey) {
+        this.previewDocuments.delete(uriKey);
+      }
       vscode.window.showErrorMessage(
         `TC Syslog: unable to open preview editor - ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
-    }
-  }
-
-  async openThemePanel() {
-    if (this.themePanel) {
-      this.themePanel.reveal(vscode.ViewColumn.Beside);
-      return;
-    }
-
-    const panel = vscode.window.createWebviewPanel(
-      "tcSyslogTheme",
-      "TC Syslog Colors & Fonts",
-      vscode.ViewColumn.Beside,
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true,
-      }
-    );
-    this.context.subscriptions.push(panel);
-
-    const htmlUri = vscode.Uri.joinPath(
-      this.context.extensionUri,
-      "media",
-      "theme.html"
-    );
-    try {
-      const html = await readFile(htmlUri.fsPath, "utf8");
-      panel.webview.html = html;
-    } catch (error) {
-      panel.webview.html = `<html><body><h3>Unable to load theme UI</h3><pre>${
-        error instanceof Error ? error.message : String(error)
-      }</pre></body></html>`;
-    }
-
-    panel.webview.onDidReceiveMessage(async (message) => {
-      if (!message) {
-        return;
-      }
-      if (message.type === "save") {
-        await this.saveThemeSettings(message.values ?? {});
-        return;
-      }
-      if (message.type === "ready") {
-        panel.webview.postMessage({
-          type: "init",
-          payload: this.getCurrentAppearanceSettings(),
-        });
-      }
-    });
-
-    panel.onDidDispose(() => {
-      this.themePanel = null;
-    });
-
-    this.themePanel = panel;
-  }
-
-  getCurrentAppearanceSettings() {
-    const config = vscode.workspace.getConfiguration("tcSyslog");
-    const levels = {};
-    for (const level of LEVEL_ORDER) {
-      const configKey = LEVEL_CONFIG_OVERRIDES[level] ?? level;
-      const value = config.get(`colors.level.${configKey}.fg`);
-      if (typeof value === "string" && value) {
-        levels[level] = value;
-      }
-    }
-
-    const tokens = {};
-    const tokenConfigMap = {
-      timestamp: "colors.timestamp.fg",
-      id: "colors.id.fg",
-      message: "colors.message.fg",
-      sqlBackground: "colors.sql.background",
-      sqlInlineBackground: "colors.sql.inline.background",
-      journalBackground: "colors.journal.background",
-      hierarchyBackground: "colors.journal.hierarchy.background",
-      accessBackground: "colors.access.background",
-    };
-    for (const [tokenKey, configKey] of Object.entries(tokenConfigMap)) {
-      const value = config.get(configKey);
-      if (typeof value === "string" && value) {
-        tokens[tokenKey] = value;
-      }
-    }
-
-    const fontFamily = config.get("font.family");
-    const fontSize = config.get("font.size");
-
-    return {
-      levels,
-      tokens,
-      fontFamily: typeof fontFamily === "string" ? fontFamily : "",
-      fontSize:
-        typeof fontSize === "number" && Number.isFinite(fontSize)
-          ? fontSize
-          : "",
-    };
-  }
-
-  async saveThemeSettings(values) {
-    const config = vscode.workspace.getConfiguration("tcSyslog");
-    const operations = [];
-    const mapping = [
-      ["colors.level.INFO.fg", values?.INFO],
-      ["colors.level.WARNING.fg", values?.WARNING],
-      ["colors.level.ERROR.fg", values?.ERROR],
-      ["colors.level.NOTE.fg", values?.NOTE],
-      ["colors.level.DEBUG.fg", values?.DEBUG],
-      ["colors.level.FATAL.fg", values?.FATAL],
-      ["colors.timestamp.fg", values?.timestamp],
-      ["colors.id.fg", values?.id],
-      ["colors.message.fg", values?.message],
-      ["colors.sql.background", values?.sqlBackground],
-      ["colors.sql.inline.background", values?.sqlInlineBackground],
-      ["colors.journal.background", values?.journalBackground],
-      [
-        "colors.journal.hierarchy.background",
-        values?.hierarchyBackground,
-      ],
-      ["colors.access.background", values?.accessBackground],
-    ];
-    for (const [key, value] of mapping) {
-      if (typeof value === "string" && value) {
-        operations.push(
-          config.update(key, value, vscode.ConfigurationTarget.Workspace)
-        );
-      }
-    }
-    if (typeof values?.fontFamily === "string" && values.fontFamily) {
-      operations.push(
-        config.update(
-          "font.family",
-          values.fontFamily,
-          vscode.ConfigurationTarget.Workspace
-        )
-      );
-    }
-    if (values?.fontSize) {
-      const numericSize = Number(values.fontSize);
-      if (!Number.isNaN(numericSize)) {
-        operations.push(
-          config.update(
-            "font.size",
-            numericSize,
-            vscode.ConfigurationTarget.Workspace
-          )
-        );
-      }
-    }
-    try {
-      await Promise.all(operations);
-      this.reloadDecorationTypes();
-      if (this.currentUri && this.latestParsed) {
-        const document = vscode.workspace.textDocuments.find(
-          (doc) => doc.uri.toString() === this.currentUri.toString()
-        );
-        if (document) {
-          this.applyDecorations(document, this.latestParsed);
-        }
-      }
-      vscode.window.showInformationMessage(
-        "TC Syslog appearance settings updated."
-      );
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        `Unable to update settings: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
@@ -2366,40 +2211,6 @@ function isSyslogDocument(document) {
   const fileName =
     document.fileName?.toLowerCase?.() ?? document.uri.fsPath.toLowerCase();
   return fileName.endsWith(".syslog");
-}
-
-function getExplorerLimits() {
-  const config = vscode.workspace.getConfiguration("tcSyslog");
-  const readLimit = (key, fallback) => {
-    const value = config.get(key);
-    if (typeof value !== "number" || !Number.isFinite(value)) {
-      return fallback;
-    }
-    const normalized = Math.max(0, Math.floor(value));
-    return normalized || fallback;
-  };
-  return {
-    logLevelEntries: readLimit(
-      "limits.logLevelEntries",
-      DEFAULT_LIMITS.logLevelEntries
-    ),
-    sqlRowsPerDump: readLimit(
-      "limits.sqlRowsPerDump",
-      DEFAULT_LIMITS.sqlRowsPerDump
-    ),
-    journalRowsPerSection: readLimit(
-      "limits.journalRowsPerSection",
-      DEFAULT_LIMITS.journalRowsPerSection
-    ),
-    inlineSqlEntries: readLimit(
-      "limits.inlineSqlEntries",
-      DEFAULT_LIMITS.inlineSqlEntries
-    ),
-    hierarchyTraceRows: readLimit(
-      "limits.hierarchyTraceRows",
-      DEFAULT_LIMITS.hierarchyTraceRows
-    ),
-  };
 }
 
 function collectNodeClipboardTexts(node, parsed, options = {}) {
@@ -2585,7 +2396,6 @@ function buildTreeModel(parsed, resource) {
     return { resource, nodes: [] };
   }
 
-  const limits = getExplorerLimits();
   const nodes = [];
   const overviewChildren = [];
   const isValidLine = (line) =>
@@ -2765,8 +2575,7 @@ function buildTreeModel(parsed, resource) {
           ? `Lines ${startLine + 1}-${endLine + 1}`
           : `Line ${startLine + 1}`;
       const allRows = entry.rows ?? [];
-      const displayRows = allRows.slice(0, limits.sqlRowsPerDump);
-      const rowChildren = displayRows.map((row, rowIndex) => ({
+      const rowChildren = allRows.map((row, rowIndex) => ({
         id: `sql:${index}:row:${rowIndex}:${row.line}`,
         label: truncate((row.text ?? "").trim() || `Row ${rowIndex + 1}`, 80),
         description: `Line ${row.line + 1}`,
@@ -2778,15 +2587,6 @@ function buildTreeModel(parsed, resource) {
             ? [{ text: row.text }]
             : undefined,
       }));
-      if (allRows.length > limits.sqlRowsPerDump) {
-        rowChildren.push({
-          id: `sql:${index}:overflow`,
-          label: `... ${allRows.length - limits.sqlRowsPerDump} more rows`,
-          description: "Use search in the editor for additional entries",
-          icon: "ellipsis",
-          clipboardExclude: true,
-        });
-      }
       const dumpLines = [];
       for (let lineIndex = startLine; lineIndex <= endLine; lineIndex += 1) {
         if (isValidLine(lineIndex)) {
@@ -2830,50 +2630,37 @@ function buildTreeModel(parsed, resource) {
             : `Lines ${section.line + 1}-${
                 (section.endLine ?? section.line) + 1
               }`;
-        const rowChildren = (section.rows ?? [])
-          .slice(0, limits.journalRowsPerSection)
-          .map((row, rowIndex) => {
-            const percentLabel = row.percent ? `${row.percent}%` : "";
-            const functionLabel = truncate(
-              row.functionName ?? `Entry ${rowIndex + 1}`,
-              80
-            );
-            const details = [];
-            if (row.totalElapsed) {
-              details.push(`${row.totalElapsed}s`);
-            }
-            if (row.callCount) {
-              details.push(`${row.callCount} calls`);
-            }
-            const suffix = details.length ? ` (${details.join(", ")})` : "";
-            const labelText = percentLabel
-              ? `${percentLabel} • ${functionLabel}${suffix}`
-              : `${functionLabel}${suffix}`;
-            return {
-              id: `journal:${index}:row:${rowIndex}:${row.line}`,
-              label: labelText,
-              description: `Line ${row.line + 1}`,
-              line: row.line,
-              tooltip: row.text ?? "",
-              icon: "graph",
-              contextValue: NODE_CONTEXT.ENTRY,
-              clipboardItems:
-                typeof row.text === "string" && row.text.length
-                  ? [{ text: row.text }]
-                  : undefined,
-            };
-          });
-        if ((section.rows?.length ?? 0) > limits.journalRowsPerSection) {
-          rowChildren.push({
-            id: `journal:${index}:overflow`,
-            label: `... ${
-              section.rows.length - limits.journalRowsPerSection
-            } more entries`,
-            description: "Use search in the editor for additional entries",
-            icon: "ellipsis",
-            clipboardExclude: true,
-          });
-        }
+        const rowChildren = (section.rows ?? []).map((row, rowIndex) => {
+          const percentLabel = row.percent ? `${row.percent}%` : "";
+          const functionLabel = truncate(
+            row.functionName ?? `Entry ${rowIndex + 1}`,
+            80
+          );
+          const details = [];
+          if (row.totalElapsed) {
+            details.push(`${row.totalElapsed}s`);
+          }
+          if (row.callCount) {
+            details.push(`${row.callCount} calls`);
+          }
+          const suffix = details.length ? ` (${details.join(", ")})` : "";
+          const labelText = percentLabel
+            ? `${percentLabel} • ${functionLabel}${suffix}`
+            : `${functionLabel}${suffix}`;
+          return {
+            id: `journal:${index}:row:${rowIndex}:${row.line}`,
+            label: labelText,
+            description: `Line ${row.line + 1}`,
+            line: row.line,
+            tooltip: row.text ?? "",
+            icon: "graph",
+            contextValue: NODE_CONTEXT.ENTRY,
+            clipboardItems:
+              typeof row.text === "string" && row.text.length
+                ? [{ text: row.text }]
+                : undefined,
+          };
+        });
         const sectionLines = [];
         const startLine = section.line ?? 0;
         const endLine = section.endLine ?? section.line ?? startLine;
@@ -2906,32 +2693,20 @@ function buildTreeModel(parsed, resource) {
           ? `Lines ${startLine + 1}-${endLine + 1}`
           : `Line ${startLine + 1}`;
       const summaryDescription = description;
-      const displayRows = (trace.rows ?? []).slice(0, limits.hierarchyTraceRows);
+      const displayRows = trace.rows ?? [];
       const rowChildren = displayRows.map((row, rowIndex) => {
         const labelText = truncate(row.routine ?? `Entry ${rowIndex + 1}`, 100);
         return {
           id: `hierarchy:${index}:row:${rowIndex}:${row.line}`,
           label: labelText,
           description: `Line ${row.line + 1}`,
-          tooltip: row.raw?.trim() ?? row.text ?? '',
+          tooltip: row.raw?.trim() ?? row.text ?? "",
           line: row.line,
           contextValue: NODE_CONTEXT.ENTRY,
           icon: "triangle-right",
           clipboardItems: row.raw ? [{ text: row.raw }] : undefined,
         };
       });
-      if ((trace.rows?.length ?? 0) > limits.hierarchyTraceRows) {
-        rowChildren.push({
-          id: `hierarchy:${index}:overflow`,
-          label: `... ${
-            trace.rows.length - limits.hierarchyTraceRows
-          } more entries`,
-          description: "Use Find in Editor for additional entries",
-          icon: "ellipsis",
-          clipboardExclude: true,
-        });
-      }
-
       const clipboardLines = [];
       for (
         let lineIndex = Math.max(0, startLine);
@@ -2996,7 +2771,10 @@ function buildTreeModel(parsed, resource) {
     const handlerNodes = parsed.workflowHandlers.map((entry, index) => {
       const label = truncate(entry.functionName || `Handler #${index + 1}`, 80);
       const startLine = Math.max(0, entry.line ?? 0);
-      const endLine = Math.max(startLine, entry.endLine ?? entry.line ?? startLine);
+      const endLine = Math.max(
+        startLine,
+        entry.endLine ?? entry.line ?? startLine
+      );
       const description =
         endLine === startLine
           ? `Line ${startLine + 1}`
@@ -3044,8 +2822,7 @@ function buildTreeModel(parsed, resource) {
     .sort((a, b) => levelRank(a[0]) - levelRank(b[0]))
     .map(([level, entries]) => {
       const orderedEntries = [...entries].sort((a, b) => a.line - b.line);
-      const display = orderedEntries.slice(0, limits.logLevelEntries);
-      const children = display.map((entry) => ({
+      const children = orderedEntries.map((entry) => ({
         id: `log:${level}:${entry.line}`,
         label: `${entry.timestamp} - ${truncate(entry.message, 80)}`,
         description: entry.id,
@@ -3058,15 +2835,6 @@ function buildTreeModel(parsed, resource) {
             ? [{ text: entry.message }]
             : undefined,
       }));
-      if (entries.length > limits.logLevelEntries) {
-        children.push({
-          id: `log:${level}:overflow`,
-          label: `... ${entries.length - limits.logLevelEntries} more`,
-          description: "Use search in the editor for additional entries",
-          icon: "ellipsis",
-          clipboardExclude: true,
-        });
-      }
       const levelLines = collectLinesFromObjects(entries);
       return {
         id: `level:${level}`,
@@ -3091,11 +2859,7 @@ function buildTreeModel(parsed, resource) {
   }
 
   if (parsed.inlineSqlLines?.length) {
-    const inlineEntries = parsed.inlineSqlLines.slice(
-      0,
-      limits.inlineSqlEntries
-    );
-    const inlineSqlNodes = inlineEntries.map((entry, index) => ({
+    const inlineSqlNodes = parsed.inlineSqlLines.map((entry, index) => ({
       id: `inlineSql:${index}:${entry.line}`,
       label: truncate(
         (entry.text ?? "").trim() || `SQL Statement ${index + 1}`,
@@ -3113,17 +2877,6 @@ function buildTreeModel(parsed, resource) {
           ? [{ text: entry.text }]
           : undefined,
     }));
-    if ((parsed.inlineSqlLines.length ?? 0) > limits.inlineSqlEntries) {
-      inlineSqlNodes.push({
-        id: "inlineSql:overflow",
-        label: `... ${
-          parsed.inlineSqlLines.length - limits.inlineSqlEntries
-        } more entries`,
-        description: "Use search in the editor for additional entries",
-        icon: "ellipsis",
-        clipboardExclude: true,
-      });
-    }
     const inlineLines = collectLinesFromObjects(parsed.inlineSqlLines ?? []);
     nodes.push({
       id: "root:inlineSql",
@@ -3164,7 +2917,10 @@ function highlightMatchInLine(lineText, column, length) {
   if (end <= start) {
     return lineText;
   }
-  return `${lineText.slice(0, start)}[${lineText.slice(start, end)}]${lineText.slice(end)}`;
+  return `${lineText.slice(0, start)}[${lineText.slice(
+    start,
+    end
+  )}]${lineText.slice(end)}`;
 }
 
 function sanitizeForUntitledLabel(text) {
@@ -3203,9 +2959,8 @@ export function activate(context) {
     vscode.commands.registerCommand("tcSyslog.copyEntry", (node) =>
       controller.copyEntry(node)
     ),
-    vscode.commands.registerCommand(
-      "tcSyslog.closeMentionsSession",
-      (node) => controller.closeMentionsSession(node)
+    vscode.commands.registerCommand("tcSyslog.closeMentionsSession", (node) =>
+      controller.closeMentionsSession(node)
     ),
     vscode.commands.registerCommand("tcSyslog.addFavorite", (node) =>
       controller.addFavorite(node)
@@ -3222,12 +2977,8 @@ export function activate(context) {
     vscode.commands.registerCommand("tcSyslog.findAllMentions", () =>
       controller.findAllMentions()
     ),
-    vscode.commands.registerCommand(
-      "tcSyslog.findAllMentionsInEditor",
-      () => controller.findAllMentionsInEditor()
-    ),
-    vscode.commands.registerCommand("tcSyslog.openThemePanel", () =>
-      controller.openThemePanel()
+    vscode.commands.registerCommand("tcSyslog.findAllMentionsInEditor", () =>
+      controller.findAllMentionsInEditor()
     )
   );
 }
