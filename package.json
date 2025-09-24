@@ -22,6 +22,8 @@
     "onCommand:tcSyslog.editFavorite",
     "onCommand:tcSyslog.removeFavorite",
     "onCommand:tcSyslog.openFavorite",
+    "onCommand:tcSyslog.closeMentionsSession",
+    "onCommand:tcSyslog.findAllMentionsInEditor",
     "onCommand:tcSyslog.openThemePanel",
     "onView:tcSyslogBasic",
     "onView:tcSyslogExtra",
@@ -60,12 +62,20 @@
         "title": "TC Syslog: Open Favorite Entry"
       },
       {
+        "command": "tcSyslog.closeMentionsSession",
+        "title": "TC Syslog: Close Mentions Result"
+      },
+      {
         "command": "tcSyslog.openThemePanel",
         "title": "TC Syslog: Colors & Fonts"
       },
       {
         "command": "tcSyslog.findAllMentions",
         "title": "TC Syslog: Find All Mentions"
+      },
+      {
+        "command": "tcSyslog.findAllMentionsInEditor",
+        "title": "TC Syslog: Find Mentions in Editor"
       }
     ],
     "viewsContainers": {
@@ -139,6 +149,14 @@
         {
           "command": "tcSyslog.findAllMentions",
           "when": "true"
+        },
+        {
+          "command": "tcSyslog.findAllMentionsInEditor",
+          "when": "true"
+        },
+        {
+          "command": "tcSyslog.closeMentionsSession",
+          "when": "false"
         }
       ],
       "view/item/context": [
@@ -157,6 +175,10 @@
         {
           "command": "tcSyslog.copyCategory",
           "when": "view == tcSyslogExtra && viewItem == syslogGroup"
+        },
+        {
+          "command": "tcSyslog.closeMentionsSession",
+          "when": "view == tcSyslogMentions && viewItem == syslogMentionsSession"
         },
         {
           "command": "tcSyslog.copyEntry",
@@ -190,6 +212,10 @@
         },
         {
           "command": "tcSyslog.findAllMentions",
+          "when": "resourceLangId == teamcenter-syslog"
+        },
+        {
+          "command": "tcSyslog.findAllMentionsInEditor",
           "when": "resourceLangId == teamcenter-syslog"
         }
       ]

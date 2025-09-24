@@ -26,6 +26,7 @@ const NODE_CONTEXT = {
   GROUP: "syslogGroup",
   ENTRY: "syslogEntry",
 };
+const FIND_MENTIONS_LIMIT = 500;
 
 class SyslogTreeDataProvider {
   constructor() {
@@ -145,72 +146,168 @@ class MentionsTreeDataProvider {
   constructor() {
     this._onDidChangeTreeData = new vscode.EventEmitter();
     this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-    this.model = {
-      resource: null,
-      query: "",
-      matches: [],
-      truncated: false,
-    };
+    this.sessions = [];
   }
 
-  setModel(model) {
-    this.model = model;
+  addSession({ resource, query, matches, truncated }) {
+    const sessionId = this.generateId();
+    const normalizedMatches = (matches ?? []).map((match, index) => ({
+      ...match,
+      type: "match",
+      id: `mentions:match:${sessionId}:${index}`,
+      sessionId,
+      resource,
+      query,
+    }));
+    const session = {
+      id: sessionId,
+      resource,
+      query,
+      truncated: Boolean(truncated),
+      createdAt: new Date(),
+      matches: normalizedMatches,
+      treeNode: {
+        type: "session",
+        id: `mentions:session:${sessionId}`,
+        sessionId,
+      },
+      summaryNode: {
+        type: "summary",
+        id: `mentions:summary:${sessionId}`,
+        sessionId,
+      },
+    };
+    this.sessions = [session, ...this.sessions];
     this._onDidChangeTreeData.fire();
+    return session;
+  }
+
+  removeSession(sessionId) {
+    const index = this.sessions.findIndex((session) => session.id === sessionId);
+    if (index === -1) {
+      return null;
+    }
+    const [removed] = this.sessions.splice(index, 1);
+    this._onDidChangeTreeData.fire();
+    return removed;
   }
 
   clear() {
-    this.setModel({ resource: null, query: "", matches: [], truncated: false });
+    if (!this.sessions.length) {
+      return;
+    }
+    this.sessions = [];
+    this._onDidChangeTreeData.fire();
   }
 
-  getChildren() {
-    const matches = this.model.matches ?? [];
-    if (!matches.length || !this.model.query) {
-      return matches;
+  hasSessions() {
+    return this.sessions.length > 0;
+  }
+
+  getChildren(element) {
+    if (!element) {
+      return this.sessions.map((session) => session.treeNode);
     }
-    const summaryText = this.model.truncated
-      ? `${matches.length}+ matches for "${truncate(this.model.query, 40)}"`
-      : `${matches.length} matches for "${truncate(this.model.query, 40)}"`;
-    const summaryNode = {
-      id: "mentions:summary",
-      type: "summary",
-      label: summaryText,
-      tooltip: summaryText,
-      clipboardExclude: true,
-    };
-    return [summaryNode, ...matches];
+    if (element.type === "session") {
+      const session = this.findSession(element.sessionId);
+      if (!session) {
+        return [];
+      }
+      return [session.summaryNode, ...session.matches];
+    }
+    return [];
   }
 
   getTreeItem(node) {
+    if (node.type === "session") {
+      const session = this.findSession(node.sessionId);
+      const rawQuery = session?.query ?? "";
+      const label = truncate(rawQuery, 60) || "(whitespace)";
+      const matchCount = session?.matches.length ?? 0;
+      const truncated = Boolean(session?.truncated);
+      const countLabel = truncated ? `${matchCount}+` : `${matchCount}`;
+      const plural = matchCount === 1 && !truncated ? "" : "es";
+      const treeItem = new vscode.TreeItem(
+        label,
+        vscode.TreeItemCollapsibleState.Collapsed
+      );
+      treeItem.description = `${countLabel} match${plural}`;
+      const locationLabel = session?.resource
+        ? vscode.workspace.asRelativePath(session.resource, false)
+        : undefined;
+      const tooltipLines = [
+        `Search term: "${rawQuery}"`,
+        `${countLabel} match${plural}`,
+      ];
+      if (locationLabel) {
+        tooltipLines.push(`File: ${locationLabel}`);
+      }
+      treeItem.tooltip = tooltipLines.join("\n");
+      treeItem.iconPath = new vscode.ThemeIcon("search");
+      treeItem.contextValue = "syslogMentionsSession";
+      return treeItem;
+    }
+
     if (node.type === "summary") {
-      const summaryItem = new vscode.TreeItem(node.label);
-      summaryItem.tooltip = node.tooltip;
+      const session = this.findSession(node.sessionId);
+      if (!session) {
+        return new vscode.TreeItem("Summary");
+      }
+      const countLabel = session.truncated
+        ? `${session.matches.length}+`
+        : `${session.matches.length}`;
+      const summaryLabel = `${countLabel} matches for "${truncate(
+        session.query ?? "",
+        40
+      )}"`;
+      const summaryItem = new vscode.TreeItem(summaryLabel);
+      const timestamp = session.createdAt.toLocaleString();
+      summaryItem.tooltip = `${summaryLabel}\n${timestamp}`;
       summaryItem.iconPath = new vscode.ThemeIcon("list-selection");
       summaryItem.contextValue = "syslogMentionsSummary";
+      summaryItem.description = session.truncated
+        ? "Results truncated"
+        : undefined;
       return summaryItem;
     }
-    const label = truncate(node.text ?? "", 140) || `(empty line)`;
-    const item = new vscode.TreeItem(
-      label,
-      vscode.TreeItemCollapsibleState.None
-    );
-    item.description = `Line ${node.line + 1}`;
-    item.tooltip = `Line ${node.line + 1}, Column ${node.column + 1}`;
-    item.command = {
-      command: "tcSyslog.revealLine",
-      title: "Reveal Mention",
-      arguments: [
-        this.model.resource,
-        node.line,
-        {
-          startLine: node.line,
-          startCharacter: node.column,
-          endLine: node.line,
-          endCharacter: node.column + (node.length ?? 0),
-        },
-      ],
-    };
-    item.iconPath = new vscode.ThemeIcon("search");
-    return item;
+
+    if (node.type === "match") {
+      const label = truncate(node.text ?? "", 140) || "(empty line)";
+      const item = new vscode.TreeItem(
+        label,
+        vscode.TreeItemCollapsibleState.None
+      );
+      const lineNumber = (node.line ?? 0) + 1;
+      item.description = `Line ${lineNumber}`;
+      item.tooltip = `Line ${lineNumber}, Column ${(node.column ?? 0) + 1}`;
+      item.command = {
+        command: "tcSyslog.revealLine",
+        title: "Reveal Mention",
+        arguments: [
+          node.resource,
+          node.line,
+          {
+            startLine: node.line,
+            startCharacter: node.column,
+            endLine: node.line,
+            endCharacter: node.column + (node.length ?? 0),
+          },
+        ],
+      };
+      item.iconPath = new vscode.ThemeIcon("search");
+      item.contextValue = "syslogMentionsMatch";
+      return item;
+    }
+
+    return new vscode.TreeItem("Unknown node");
+  }
+
+  findSession(sessionId) {
+    return this.sessions.find((session) => session.id === sessionId) ?? null;
+  }
+
+  generateId() {
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
   }
 }
 
@@ -1518,20 +1615,23 @@ class SyslogController {
     if (!parsed) {
       return;
     }
-    const lines = collectNodeClipboardTexts(target, parsed, {
+    const entries = collectNodeClipboardTexts(target, parsed, {
       includeChildren: true,
+      returnObjects: true,
     });
-    if (!lines.length) {
+    if (!entries.length) {
       vscode.window.showInformationMessage(
         "TC Syslog: nothing to copy for this category"
       );
       return;
     }
-    await vscode.env.clipboard.writeText(lines.join("\n"));
-    vscode.window.setStatusBarMessage(
-      "TC Syslog: category copied to clipboard",
-      2500
-    );
+    await this.openTextPreviewDocument(entries, {
+      nodeLabel: target.label,
+      prefix: "category",
+      title: "TC Syslog Category Preview",
+      statusMessage: "TC Syslog: category opened in editor",
+      resource: this.currentUri,
+    });
   }
 
   async copyEntry(node) {
@@ -1550,20 +1650,23 @@ class SyslogController {
     if (!parsed) {
       return;
     }
-    const lines = collectNodeClipboardTexts(target, parsed, {
+    const entries = collectNodeClipboardTexts(target, parsed, {
       includeChildren: false,
+      returnObjects: true,
     });
-    if (!lines.length) {
+    if (!entries.length) {
       vscode.window.showInformationMessage(
         "TC Syslog: nothing to copy for this entry"
       );
       return;
     }
-    await vscode.env.clipboard.writeText(lines.join("\n"));
-    vscode.window.setStatusBarMessage(
-      "TC Syslog: entry copied to clipboard",
-      2500
-    );
+    await this.openTextPreviewDocument(entries, {
+      nodeLabel: target.label,
+      prefix: "entry",
+      title: "TC Syslog Entry Preview",
+      statusMessage: "TC Syslog: entry opened in editor",
+      resource: this.currentUri,
+    });
   }
 
   async addFavorite(node) {
@@ -1698,85 +1801,32 @@ class SyslogController {
   }
 
   async findAllMentions() {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor || !isSyslogDocument(editor.document)) {
-      vscode.window.showInformationMessage(
-        "TC Syslog: open a Teamcenter syslog file and select text to search."
-      );
-      return;
-    }
-    const selection = editor.selection;
-    const selectedText = editor.document.getText(selection);
-    const needle = selectedText.trim();
-    if (!needle) {
-      vscode.window.showInformationMessage(
-        "TC Syslog: select some text before running Find All Mentions."
-      );
+    const context = this.prepareMentionsSearchContext();
+    if (!context) {
       return;
     }
 
-    const document = editor.document;
-    const haystack = document.getText();
-    if (!haystack.length) {
-      vscode.window.showWarningMessage("TC Syslog: current document is empty.");
-      return;
-    }
-
-    const limit = 500;
-    const matches = [];
-    let index = 0;
-    while (index !== -1) {
-      index = haystack.indexOf(needle, index);
-      if (index === -1) {
-        break;
-      }
-      const startPosition = document.positionAt(index);
-      const endPosition = document.positionAt(index + needle.length);
-      const lineText = document.lineAt(startPosition.line).text;
-      matches.push({
-        line: startPosition.line,
-        column: startPosition.character,
-        length: needle.length,
-        text: lineText,
-        start: startPosition,
-        end: endPosition,
-      });
-      if (matches.length >= limit) {
-        break;
-      }
-      index += Math.max(needle.length, 1);
-    }
+    const { document, needle, haystack } = context;
+    const { matches, truncated } = this.collectMentionsMatches(
+      document,
+      haystack,
+      needle
+    );
 
     if (!matches.length) {
-      vscode.window.showInformationMessage(
-        `TC Syslog: no mentions of "${truncate(needle, 80)}" found.`
-      );
-      this.mentionsDataProvider.clear();
-      if (this.mentionsView) {
-        this.mentionsView.message = `No mentions found for "${truncate(
-          needle,
-          60
-        )}".`;
-      }
+      this.handleNoMentionsFound(needle);
       return;
     }
 
-    const extraMatches = (() => {
-      if (matches.length < limit) {
-        return 0;
-      }
-      const nextIndex = haystack.indexOf(needle, index);
-      return nextIndex === -1 ? 0 : 1;
-    })();
-    this.mentionsDataProvider.setModel({
+    const session = this.mentionsDataProvider.addSession({
       resource: document.uri,
       query: needle,
       matches,
-      truncated: Boolean(extraMatches),
+      truncated,
     });
 
     if (this.mentionsView) {
-      this.mentionsView.message = extraMatches
+      this.mentionsView.message = truncated
         ? `Showing first ${matches.length} mentions for "${truncate(
             needle,
             60
@@ -1787,15 +1837,354 @@ class SyslogController {
     await vscode.commands.executeCommand(
       "workbench.view.extension.tcSyslogPanel"
     );
-    if (matches.length) {
+    if (this.mentionsView) {
       try {
-        await this.mentionsView.reveal(matches[0], {
+        await this.mentionsView.reveal(session.treeNode, {
+          expand: true,
           focus: false,
           select: false,
         });
       } catch (error) {
         // ignore reveal issues
       }
+      const firstMatch = session.matches[0];
+      if (firstMatch) {
+        try {
+          await this.mentionsView.reveal(firstMatch, {
+            focus: false,
+            select: false,
+          });
+        } catch (error) {
+          // ignore reveal issues
+        }
+      }
+    }
+  }
+
+  async findAllMentionsInEditor() {
+    const context = this.prepareMentionsSearchContext();
+    if (!context) {
+      return;
+    }
+
+    const { document, needle, haystack } = context;
+    const { matches, truncated } = this.collectMentionsMatches(
+      document,
+      haystack,
+      needle
+    );
+
+    if (!matches.length) {
+      this.handleNoMentionsFound(needle);
+      return;
+    }
+
+    this.mentionsDataProvider.addSession({
+      resource: document.uri,
+      query: needle,
+      matches,
+      truncated,
+    });
+    if (this.mentionsView) {
+      this.mentionsView.message = truncated
+        ? `Showing first ${matches.length} mentions for "${truncate(
+            needle,
+            60
+          )}".`
+        : undefined;
+    }
+
+    await this.openMentionsDocument(document, needle, matches, truncated);
+  }
+
+  prepareMentionsSearchContext() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || !isSyslogDocument(editor.document)) {
+      vscode.window.showInformationMessage(
+        "TC Syslog: open a Teamcenter syslog file and select text to search."
+      );
+      return null;
+    }
+
+    const document = editor.document;
+    const selection = editor.selection;
+    const selectedText = document.getText(selection);
+    const needle = selectedText.trim();
+    if (!needle) {
+      vscode.window.showInformationMessage(
+        "TC Syslog: select some text before running Find All Mentions."
+      );
+      return null;
+    }
+
+    const haystack = document.getText();
+    if (!haystack.length) {
+      vscode.window.showWarningMessage("TC Syslog: current document is empty.");
+      return null;
+    }
+
+    return { document, needle, haystack };
+  }
+
+  collectMentionsMatches(document, haystack, needle) {
+    const matches = [];
+    const searchStep = Math.max(needle.length, 1);
+    let searchIndex = 0;
+    let truncated = false;
+
+    while (true) {
+      const foundIndex = haystack.indexOf(needle, searchIndex);
+      if (foundIndex === -1) {
+        break;
+      }
+      const startPosition = document.positionAt(foundIndex);
+      const endPosition = document.positionAt(foundIndex + needle.length);
+      const lineText = document.lineAt(startPosition.line).text;
+      matches.push({
+        line: startPosition.line,
+        column: startPosition.character,
+        length: needle.length,
+        text: lineText,
+        start: startPosition,
+        end: endPosition,
+      });
+
+      const nextSearchStart = foundIndex + searchStep;
+      if (matches.length >= FIND_MENTIONS_LIMIT) {
+        truncated = haystack.indexOf(needle, nextSearchStart) !== -1;
+        break;
+      }
+      searchIndex = nextSearchStart;
+    }
+
+    return { matches, truncated };
+  }
+
+  handleNoMentionsFound(needle) {
+    vscode.window.showInformationMessage(
+      `TC Syslog: no mentions of "${truncate(needle, 80)}" found.`
+    );
+    if (this.mentionsView && !this.mentionsDataProvider.hasSessions()) {
+      this.mentionsView.message = `No mentions found for "${truncate(
+        needle,
+        60
+      )}".`;
+    }
+  }
+
+  buildMentionsDocumentContent(document, needle, matches, truncated) {
+    const relativePath = vscode.workspace.asRelativePath(document.uri, false);
+    const absolutePath = document.uri.fsPath;
+    const matchCountLabel = truncated
+      ? `${matches.length}+ (limit ${FIND_MENTIONS_LIMIT})`
+      : `${matches.length}`;
+    const headerLines = [
+      "Find Mentions Report",
+      `Query: "${needle}"`,
+      `File: ${relativePath}`,
+      `Matches: ${matchCountLabel}`,
+      `Generated: ${new Date().toLocaleString()}`,
+    ];
+
+    const body = matches
+      .map((match, index) => {
+        const lineNumber = (match.line ?? 0) + 1;
+        const columnNumber = (match.column ?? 0) + 1;
+        const highlighted = highlightMatchInLine(
+          match.text ?? "",
+          match.column,
+          match.length
+        );
+        const location = `${absolutePath}:${lineNumber}:${columnNumber}`;
+        return `${index + 1}. Line ${lineNumber}, Column ${columnNumber}\n   Location: ${location}\n   ${highlighted}`;
+      })
+      .join("\n\n");
+
+    const truncatedNote = truncated
+      ? `\n\nNote: only the first ${matches.length} matches are listed (limit ${FIND_MENTIONS_LIMIT}).`
+      : "";
+
+    return `${headerLines.join("\n")}\n\n${body}${truncatedNote}`;
+  }
+
+  async openMentionsDocument(document, needle, matches, truncated) {
+    const content = this.buildMentionsDocumentContent(
+      document,
+      needle,
+      matches,
+      truncated
+    );
+    const sanitizedQuery = sanitizeForUntitledLabel(needle);
+    const label = truncate(sanitizedQuery, 32) || "query";
+    const untitledUri = vscode.Uri.parse(
+      `untitled:Mentions-${label}-${Date.now()}.txt`
+    );
+
+    try {
+      const targetDocument = await vscode.workspace.openTextDocument(untitledUri);
+      const editor = await vscode.window.showTextDocument(targetDocument, {
+        preview: false,
+        viewColumn: vscode.ViewColumn.Beside,
+      });
+      const output = content.endsWith("\n") ? content : `${content}\n`;
+      const success = await editor.edit((builder) => {
+        builder.insert(new vscode.Position(0, 0), output);
+      });
+      if (success) {
+        const start = new vscode.Position(0, 0);
+        editor.selection = new vscode.Selection(start, start);
+        editor.revealRange(new vscode.Range(start, start));
+      } else {
+        vscode.window.showWarningMessage(
+          "TC Syslog: unable to populate mentions document."
+        );
+      }
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        `TC Syslog: unable to open mentions document - ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  closeMentionsSession(node) {
+    const sessionId =
+      typeof node === "string"
+        ? node
+        : node?.sessionId ?? node?.id?.replace(/^mentions:session:/, "");
+    if (!sessionId) {
+      return;
+    }
+    this.mentionsDataProvider.removeSession(sessionId);
+    if (!this.mentionsDataProvider.hasSessions() && this.mentionsView) {
+      this.mentionsView.message = "Run Find All Mentions to populate results.";
+    }
+  }
+
+  async openTextPreviewDocument(entries, options = {}) {
+    const normalizedEntries = Array.isArray(entries)
+      ? entries
+          .map((entry) => {
+            if (typeof entry === "string") {
+              return { text: entry, line: undefined };
+            }
+            if (!entry || typeof entry !== "object") {
+              return null;
+            }
+            const text =
+              typeof entry.text === "string" ? entry.text : String(entry.text ?? "");
+            const line =
+              typeof entry.line === "number" && Number.isFinite(entry.line)
+                ? entry.line
+                : undefined;
+            return { text, line };
+          })
+          .filter((entry) => entry !== null)
+      : [];
+    if (!normalizedEntries.length) {
+      vscode.window.showInformationMessage(
+        "TC Syslog: nothing to display in preview."
+      );
+      return;
+    }
+    const hasContent = normalizedEntries.some((entry) => entry.text.length);
+
+    const resource =
+      options.resource instanceof vscode.Uri ? options.resource : this.currentUri;
+    const relativePath = resource
+      ? vscode.workspace.asRelativePath(resource, false)
+      : undefined;
+    const absolutePath = resource?.fsPath;
+
+    const title =
+      typeof options.title === "string" && options.title.trim().length
+        ? options.title.trim()
+        : "TC Syslog Data Preview";
+    const contextLabel =
+      typeof options.nodeLabel === "string" && options.nodeLabel.trim().length
+        ? options.nodeLabel.trim()
+        : undefined;
+
+    const headerLines = [
+      title,
+      contextLabel ? `Context: ${contextLabel}` : undefined,
+      relativePath ? `File: ${relativePath}` : undefined,
+      `Entries: ${normalizedEntries.length}`,
+      `Generated: ${new Date().toLocaleString()}`,
+    ].filter(Boolean);
+
+    const body = normalizedEntries
+      .map((entry, index) => {
+        const lineNumber =
+          typeof entry.line === "number" ? entry.line + 1 : undefined;
+        const segments = [];
+        const heading = lineNumber
+          ? `Line ${lineNumber}`
+          : `Entry ${index + 1}`;
+        segments.push(`${index + 1}. ${heading}`);
+        if (lineNumber && absolutePath) {
+          segments.push(`   Location: ${absolutePath}:${lineNumber}`);
+        } else if (lineNumber) {
+          segments.push(`   Line: ${lineNumber}`);
+        }
+        const textContent = entry.text.length ? entry.text : "(empty)";
+        segments.push(`   ${textContent}`);
+        return segments.join("\n");
+      })
+      .join("\n\n");
+
+    const content = `${headerLines.join("\n")}\n\n${body}`;
+    const finalContent = content.endsWith("\n") ? content : `${content}\n`;
+
+    const prefix =
+      typeof options.prefix === "string" && options.prefix.trim()
+        ? options.prefix.trim()
+        : "tc-syslog";
+    const baseLabel =
+      typeof options.nodeLabel === "string" && options.nodeLabel.trim()
+        ? options.nodeLabel.trim()
+        : prefix;
+
+    const sanitizedPrefix = sanitizeForUntitledLabel(prefix);
+    const sanitizedLabel = truncate(
+      sanitizeForUntitledLabel(baseLabel),
+      32
+    );
+    const fileLabel = `${sanitizedPrefix}-${sanitizedLabel || "data"}-${Date.now()}`;
+    const untitledUri = vscode.Uri.parse(`untitled:${fileLabel}.txt`);
+
+    try {
+      const document = await vscode.workspace.openTextDocument(untitledUri);
+      const editor = await vscode.window.showTextDocument(document, {
+        preview: false,
+        viewColumn: vscode.ViewColumn.Beside,
+      });
+      const success = await editor.edit((builder) => {
+        builder.insert(new vscode.Position(0, 0), finalContent);
+      });
+      if (!success) {
+        vscode.window.showWarningMessage(
+          "TC Syslog: unable to open preview editor."
+        );
+        return;
+      }
+      const start = new vscode.Position(0, 0);
+      editor.selection = new vscode.Selection(start, start);
+      editor.revealRange(new vscode.Range(start, start));
+      if (
+        typeof options.statusMessage === "string" &&
+        options.statusMessage &&
+        hasContent
+      ) {
+        vscode.window.setStatusBarMessage(options.statusMessage, 2500);
+      }
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        `TC Syslog: unable to open preview editor - ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -2018,6 +2407,7 @@ function collectNodeClipboardTexts(node, parsed, options = {}) {
     return [];
   }
   const includeChildren = options.includeChildren !== false;
+  const returnObjects = options.returnObjects === true;
   const seenLines = new Set();
   const collected = [];
   let order = 0;
@@ -2068,6 +2458,16 @@ function collectNodeClipboardTexts(node, parsed, options = {}) {
     return a.order - b.order;
   });
 
+  if (returnObjects) {
+    return collected.map((entry) => ({
+      text: entry.text,
+      line:
+        typeof entry.line === "number" && Number.isFinite(entry.line)
+          ? entry.line
+          : undefined,
+    }));
+  }
+
   return collected.map((entry) => entry.text);
 }
 
@@ -2089,14 +2489,20 @@ function resolveNodeClipboardEntries(node, parsed, seenLines) {
     results.push({ text, line });
   };
 
-  const addText = (text) => {
+  const addText = (text, lineHint) => {
     if (typeof text !== "string" || !text.length) {
       return;
+    }
+    if (typeof lineHint === "number") {
+      const lineText = getLineText(parsed, lineHint);
+      if (typeof lineText === "string" && lineText === text) {
+        return;
+      }
     }
     results.push({ text });
   };
 
-  const processItem = (item) => {
+  const processItem = (item, lineHint) => {
     if (item === null || item === undefined) {
       return;
     }
@@ -2105,40 +2511,42 @@ function resolveNodeClipboardEntries(node, parsed, seenLines) {
       return;
     }
     if (typeof item === "string") {
-      addText(item);
+      addText(item, lineHint);
       return;
     }
     if (typeof item === "object") {
+      const effectiveLine =
+        typeof item.line === "number" ? item.line : lineHint;
       if (typeof item.line === "number") {
         addLine(item.line);
       }
       if (typeof item.text === "string") {
-        addText(item.text);
+        addText(item.text, effectiveLine);
       }
     }
   };
 
   if (Array.isArray(node.clipboardLines)) {
     for (const value of node.clipboardLines) {
-      processItem(value);
+      processItem(value, undefined);
     }
   }
   if (Array.isArray(node.clipboardItems)) {
     for (const value of node.clipboardItems) {
-      processItem(value);
+      processItem(value, node.line);
     }
   }
   if (typeof node.copyText === "string") {
-    addText(node.copyText);
+    addText(node.copyText, node.line);
   }
   if (typeof node.line === "number") {
-    processItem(node.line);
+    processItem(node.line, node.line);
   }
 
   if (!results.length && (!node.children || !node.children.length)) {
     const fallback = buildNodeFallbackText(node);
     if (fallback) {
-      addText(fallback);
+      addText(fallback, node.line);
     }
   }
 
@@ -2744,6 +3152,32 @@ function levelRank(level) {
   return idx === -1 ? LEVEL_ORDER.length : idx;
 }
 
+function highlightMatchInLine(lineText, column, length) {
+  if (typeof lineText !== "string" || !lineText.length) {
+    return lineText ?? "";
+  }
+  if (typeof column !== "number" || column < 0 || typeof length !== "number") {
+    return lineText;
+  }
+  const start = Math.min(Math.max(column, 0), lineText.length);
+  const end = Math.min(start + Math.max(length, 0), lineText.length);
+  if (end <= start) {
+    return lineText;
+  }
+  return `${lineText.slice(0, start)}[${lineText.slice(start, end)}]${lineText.slice(end)}`;
+}
+
+function sanitizeForUntitledLabel(text) {
+  if (typeof text !== "string" || !text.trim()) {
+    return "query";
+  }
+  const normalized = text
+    .replace(/[^a-zA-Z0-9\-_.]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return normalized || "query";
+}
+
 function truncate(text, maxLength) {
   if (!text || text.length <= maxLength) {
     return text;
@@ -2769,6 +3203,10 @@ export function activate(context) {
     vscode.commands.registerCommand("tcSyslog.copyEntry", (node) =>
       controller.copyEntry(node)
     ),
+    vscode.commands.registerCommand(
+      "tcSyslog.closeMentionsSession",
+      (node) => controller.closeMentionsSession(node)
+    ),
     vscode.commands.registerCommand("tcSyslog.addFavorite", (node) =>
       controller.addFavorite(node)
     ),
@@ -2783,6 +3221,10 @@ export function activate(context) {
     ),
     vscode.commands.registerCommand("tcSyslog.findAllMentions", () =>
       controller.findAllMentions()
+    ),
+    vscode.commands.registerCommand(
+      "tcSyslog.findAllMentionsInEditor",
+      () => controller.findAllMentionsInEditor()
     ),
     vscode.commands.registerCommand("tcSyslog.openThemePanel", () =>
       controller.openThemePanel()
