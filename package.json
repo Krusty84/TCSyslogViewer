@@ -212,92 +212,71 @@
       ]
     },
     "configuration": {
-      "title": "TC Syslog Viewer",
       "properties": {
-        "tcSyslog.colors.level.INFO.fg": {
-          "type": "color-hex",
-          "default": "#1479ff",
-          "description": "INFO text color"
-        },
         "tcSyslog.colors.level.WARNING.fg": {
           "type": "color-hex",
-          "default": "#b8860b",
-          "description": "WARNING text color"
+          "default": "#b27000",
+          "description": "Log Level WARNING foreground color"
         },
-        "tcSyslog.colors.level.ERROR.fg": {
+        "tcSyslog.colors.level.WARNING.bg": {
           "type": "color-hex",
-          "default": "#ff4242",
-          "description": "ERROR text color"
-        },
-        "tcSyslog.colors.level.NOTE.fg": {
-          "type": "color-hex",
-          "default": "#3aa669",
-          "description": "NOTE text color"
+          "default": "#b2700022",
+          "description": "Log Level WARNING background color"
         },
         "tcSyslog.colors.level.DEBUG.fg": {
           "type": "color-hex",
-          "default": "#888888",
-          "description": "DEBUG text color"
+          "default": "#5c6770",
+          "description": "Log Level DEBUG foreground color"
+        },
+        "tcSyslog.colors.level.DEBUG.bg": {
+          "type": "color--hex",
+          "default": "#5c677022",
+          "description": "Log Level DEBUG background color"
         },
         "tcSyslog.colors.level.FATAL.fg": {
           "type": "color-hex",
-          "default": "#ff00aa",
-          "description": "FATAL text color"
+          "default": "#c21850",
+          "description": "Log Level FATAL foreground color"
         },
-        "tcSyslog.font.family": {
-          "type": "string",
-          "default": "monospace",
-          "description": "Font family for entry preview"
-        },
-        "tcSyslog.font.size": {
-          "type": "number",
-          "default": 12,
-          "description": "Font size (px) for entry preview"
+        "tcSyslog.colors.level.FATAL.bg": {
+          "type": "color-hex",
+          "default": "#c2185022",
+          "description": "Log Level FATAL background color"
         },
         "tcSyslog.colors.timestamp.fg": {
           "type": "color-hex",
-          "default": "#9aa0a6",
-          "description": "Timestamp text color"
-        },
-        "tcSyslog.colors.id.fg": {
-          "type": "color-hex",
-          "default": "#c586c0",
-          "description": "Identifier text color"
-        },
-        "tcSyslog.colors.message.fg": {
-          "type": "color-hex",
-          "default": "#d4d4d4",
-          "description": "Message text color"
+          "default": "#7f868e",
+          "description": "Timestamp foreground color"
         },
         "tcSyslog.colors.sql.background": {
           "type": "color-hex",
-          "default": "#f8f53b7f",
+          "default": "#f1e8d1cc",
           "description": "SQL dump background color"
         },
         "tcSyslog.colors.sql.inline.background": {
           "type": "color-hex",
-          "default": "#f8f53b7f",
+          "default": "#f1e8d1cc",
           "description": "Inline SQL background color"
         },
         "tcSyslog.colors.journal.background": {
           "type": "color-hex",
-          "default": "#f8f53b7f",
-          "description": "Journalling section background color"
+          "default": "#dceeffcc",
+          "description": "Journal sections background color"
         },
         "tcSyslog.colors.journal.hierarchy.background": {
           "type": "color-hex",
-          "default": "#f8f53b40",
-          "description": "Journal hierarchy trace background color"
+          "default": "#dceeff99",
+          "description": "Hierarchy trace background color"
         },
         "tcSyslog.colors.access.background": {
           "type": "color-hex",
-          "default": "#4b9eff33",
+          "default": "#c4e4ffcc",
           "description": "Access privilege check background color"
         },
         "tcSyslog.colors.workflow.background": {
           "type": "color-hex",
-          "default": "#5c98ff55",
-          "description": "Workflow handler enter/leave background color"
+          "default": "#d0e8ffcc",
+          "description": "Workflow handler flow background color"
         }
       }
     },

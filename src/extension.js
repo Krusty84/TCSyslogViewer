@@ -691,6 +691,7 @@ class SyslogController {
     this.refreshTimer = undefined;
     this.pendingDocument = undefined;
     this.levelDecorationTypes = new Map();
+    this.levelBackgroundDecorationTypes = new Map();
     this.headerDecorationType = undefined;
     this.envKeyDecorationType = undefined;
     this.envValueDecorationType = undefined;
@@ -703,7 +704,6 @@ class SyslogController {
     this.hierarchyTraceDecorationType = undefined;
     this.accessCheckDecorationType = undefined;
     this.workflowHandlerDecorationType = undefined;
-    this.accessCheckDecorationType = undefined;
     this.baseFontDecorationType = undefined;
     this.latestParsed = null;
     this.favoritesManager = new FavoritesManager(this, context);
@@ -771,12 +771,12 @@ class SyslogController {
     this.disposeDecorationTypes();
     const config = vscode.workspace.getConfiguration("tcSyslog");
     const levelDefaults = {
-      FATAL: "#ff00aa",
-      ERROR: "#ff4242",
-      WARN: "#b8860b",
-      NOTE: "#3aa669",
-      INFO: "#1479ff",
-      DEBUG: "#888888",
+      FATAL: { fg: "#ff00aa", bg: "#ff00aa22" },
+      ERROR: { fg: "#ff4242", bg: "#ff424222" },
+      WARN: { fg: "#b8860b", bg: "#b8860b22" },
+      NOTE: { fg: "#3aa669", bg: "#3aa66922" },
+      INFO: { fg: "#1479ff", bg: "#1479ff22" },
+      DEBUG: { fg: "#888888", bg: "#88888822" },
     };
     const tokenDefaults = {
       timestamp: "#262627ff",
@@ -813,19 +813,42 @@ class SyslogController {
     };
 
     this.levelDecorationTypes = new Map();
+    this.levelBackgroundDecorationTypes = new Map();
     for (const level of LEVEL_ORDER) {
       const configKey = LEVEL_CONFIG_OVERRIDES[level] ?? level;
-      const value = config.get(`colors.level.${configKey}.fg`);
+      const fgValue = config.get(`colors.level.${configKey}.fg`);
+      const bgValue = config.get(`colors.level.${configKey}.bg`);
+      const defaults = levelDefaults[level] ?? {};
       const color =
-        typeof value === "string" && value ? value : levelDefaults[level];
-      const options = {
+        typeof fgValue === "string" && fgValue
+          ? fgValue
+          : defaults.fg ?? "#ffffff";
+      const backgroundColor =
+        typeof bgValue === "string" && bgValue
+          ? bgValue
+          : defaults.bg ?? undefined;
+
+      const tokenOptions = {
         color,
         fontWeight: "bold",
         rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
       };
-      applyFontOptions(options);
-      const decoration = vscode.window.createTextEditorDecorationType(options);
-      this.levelDecorationTypes.set(level, decoration);
+      applyFontOptions(tokenOptions);
+      this.levelDecorationTypes.set(
+        level,
+        vscode.window.createTextEditorDecorationType(tokenOptions)
+      );
+
+      if (backgroundColor) {
+        this.levelBackgroundDecorationTypes.set(
+          level,
+          vscode.window.createTextEditorDecorationType({
+            backgroundColor,
+            isWholeLine: true,
+            rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+          })
+        );
+      }
     }
 
     const headerOptions = {
@@ -986,7 +1009,13 @@ class SyslogController {
         decoration.dispose();
       }
     }
+    if (this.levelBackgroundDecorationTypes) {
+      for (const decoration of this.levelBackgroundDecorationTypes.values()) {
+        decoration.dispose();
+      }
+    }
     this.levelDecorationTypes = new Map();
+    this.levelBackgroundDecorationTypes = new Map();
     if (this.headerDecorationType) {
       this.headerDecorationType.dispose();
       this.headerDecorationType = undefined;
@@ -1054,6 +1083,10 @@ class SyslogController {
     for (const level of this.levelDecorationTypes.keys()) {
       levelRanges.set(level, []);
     }
+    const levelBackgroundRanges = new Map();
+    for (const level of this.levelBackgroundDecorationTypes.keys()) {
+      levelBackgroundRanges.set(level, []);
+    }
     const timestampRanges = [];
     const idRanges = [];
     const messageRanges = [];
@@ -1082,6 +1115,10 @@ class SyslogController {
             Math.max(0, levelEnd)
           )
         );
+      }
+      const backgroundRanges = levelBackgroundRanges.get(entry.level);
+      if (backgroundRanges) {
+        backgroundRanges.push(new vscode.Range(lineNumber, 0, lineNumber, 0));
       }
 
       if (entry.timestampStart != null && entry.timestampEnd != null) {
@@ -1257,6 +1294,12 @@ class SyslogController {
       for (const [level, decoration] of this.levelDecorationTypes) {
         editor.setDecorations(decoration, levelRanges.get(level) ?? []);
       }
+      for (const [level, decoration] of this.levelBackgroundDecorationTypes) {
+        editor.setDecorations(
+          decoration,
+          levelBackgroundRanges.get(level) ?? []
+        );
+      }
       if (this.timestampDecorationType) {
         editor.setDecorations(this.timestampDecorationType, timestampRanges);
       }
@@ -1327,6 +1370,9 @@ class SyslogController {
 
     for (const editor of editors) {
       for (const decoration of this.levelDecorationTypes.values()) {
+        editor.setDecorations(decoration, []);
+      }
+      for (const decoration of this.levelBackgroundDecorationTypes.values()) {
         editor.setDecorations(decoration, []);
       }
       if (this.timestampDecorationType) {

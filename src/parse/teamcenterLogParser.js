@@ -1,37 +1,39 @@
-import antlr4 from 'antlr4';
-import TeamcenterLogLexer from './antlr/generated/TeamcenterLogLexer.js';
-import TeamcenterLogParser from './antlr/generated/TeamcenterLogParser.js';
-import TeamcenterLogVisitor from './antlr/generated/TeamcenterLogVisitor.js';
+import antlr4 from "antlr4";
+import TeamcenterLogLexer from "./antlr/generated/TeamcenterLogLexer.js";
+import TeamcenterLogParser from "./antlr/generated/TeamcenterLogParser.js";
+import TeamcenterLogVisitor from "./antlr/generated/TeamcenterLogVisitor.js";
 
-const LOG_LINE_REGEX = /^(INFO|DEBUG|NOTE|WARN|ERROR|FATAL)\s*-\s*([0-9]{4}\/[0-9]{2}\/[0-9]{2}-[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?)\s+UTC\s*-\s*(.+?)\s*-\s*(.*)$/;
+const LOG_LINE_REGEX =
+  /^(INFO|DEBUG|NOTE|WARN|ERROR|FATAL)\s*-\s*([0-9]{4}\/[0-9]{2}\/[0-9]{2}-[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?)\s+UTC\s*-\s*(.+?)\s*-\s*(.*)$/;
 const SYSTEM_INFO_PREFIXES = [
-  'Node Name',
-  'Machine type',
-  'OS',
-  '# Processors',
-  'Memory',
-  'Total Swap',
-  'Free  Swap',
-  'Machine supports',
-  'Running'
+  "Node Name",
+  "Machine type",
+  "OS",
+  "# Processors",
+  "Memory",
+  "Total Swap",
+  "Free  Swap",
+  "Machine supports",
+  "Running",
 ];
 
 const INLINE_SQL_KEYWORDS = new Set([
-  'SELECT',
-  'INSERT',
-  'UPDATE',
-  'DELETE',
-  'MERGE',
-  'WITH',
-  'TRUNCATE',
-  'CREATE',
-  'ALTER',
-  'DROP',
-  'CALL',
-  'EXEC',
-  'BEGIN',
-  'COMMIT',
-  'ROLLBACK'
+  "SELECT",
+  "INSERT",
+  "UPDATE",
+  "DELETE",
+  "MERGE",
+  "WITH",
+  "TRUNCATE",
+  "CREATE",
+  "ALTER",
+  "DROP",
+  "CALL",
+  "EXEC",
+  "BEGIN",
+  "COMMIT",
+  "CONNECT",
+  "ROLLBACK",
 ]);
 
 function isInlineSqlText(text) {
@@ -61,7 +63,6 @@ function isInlineSqlText(text) {
   return true;
 }
 
-
 class CollectingVisitor extends TeamcenterLogVisitor {
   constructor(lines) {
     super();
@@ -81,7 +82,7 @@ class CollectingVisitor extends TeamcenterLogVisitor {
       truncated: [],
       logLines: [],
       inlineSqlLines: [],
-      parseErrors: []
+      parseErrors: [],
     };
     this._sqlStack = [];
   }
@@ -108,7 +109,7 @@ class CollectingVisitor extends TeamcenterLogVisitor {
       entries.push({
         line: startLine + offset,
         key: match[1].trim(),
-        value: match[2].trim()
+        value: match[2].trim(),
       });
       offset += 1;
     }
@@ -136,7 +137,7 @@ class CollectingVisitor extends TeamcenterLogVisitor {
         address: parts[2],
         size: parts[3],
         hash: parts[4],
-        date: parts.slice(5).join(' ')
+        date: parts.slice(5).join(" "),
       });
       offset += 1;
     }
@@ -150,7 +151,7 @@ class CollectingVisitor extends TeamcenterLogVisitor {
     const section = {
       line: startLine,
       endLine,
-      rows: []
+      rows: [],
     };
     this.result.sqlDumps.push(section);
     this._sqlStack.push(section);
@@ -168,7 +169,7 @@ class CollectingVisitor extends TeamcenterLogVisitor {
     const textLine = this.lines?.[line] ?? ctx.getText();
     current.rows.push({
       line,
-      text: textLine
+      text: textLine,
     });
     return null;
   }
@@ -199,10 +200,10 @@ function collectHeader(lines) {
     return null;
   }
   const headerLines = [];
-  if (lines[0]?.startsWith('***')) {
+  if (lines[0]?.startsWith("***")) {
     headerLines.push({ line: 0, text: lines[0] });
   }
-  if (lines[1]?.startsWith('*** system log created by')) {
+  if (lines[1]?.startsWith("*** system log created by")) {
     headerLines.push({ line: 1, text: lines[1] });
   }
   if (!headerLines.length) {
@@ -210,7 +211,7 @@ function collectHeader(lines) {
   }
   return {
     line: headerLines[0].line,
-    lines: headerLines
+    lines: headerLines,
   };
 }
 
@@ -225,7 +226,7 @@ function collectSystemInfo(lines) {
     if (!prefix) {
       continue;
     }
-    const value = raw.slice(prefix.length).replace(/^[\s:-]+/, '');
+    const value = raw.slice(prefix.length).replace(/^[\s:-]+/, "");
     entries.push({ line: i, key: prefix, value: value.trim() });
   }
   return entries;
@@ -235,9 +236,9 @@ function collectSqlSections(lines) {
   const sections = [];
   let index = 0;
   while (index < lines.length) {
-    const originalLine = lines[index] ?? '';
+    const originalLine = lines[index] ?? "";
     const trimmed = originalLine.trim();
-    if (!trimmed.startsWith('START SQL_PROFILE_DUMP')) {
+    if (!trimmed.startsWith("START SQL_PROFILE_DUMP")) {
       index += 1;
       continue;
     }
@@ -245,26 +246,28 @@ function collectSqlSections(lines) {
     const section = {
       line: index,
       endLine: index,
-      rows: []
+      rows: [],
     };
 
     let cursor = index + 1;
     let closed = false;
     while (cursor < lines.length) {
-      const current = lines[cursor] ?? '';
+      const current = lines[cursor] ?? "";
       const currentTrimmed = current.trim();
-      if (currentTrimmed.startsWith('END SQL_PROFILE_DUMP')) {
+      if (currentTrimmed.startsWith("END SQL_PROFILE_DUMP")) {
         section.endLine = cursor;
         cursor += 1;
         closed = true;
         break;
       }
-      if (currentTrimmed &&
-          !currentTrimmed.startsWith('Nr Calls') &&
-          !/^[_-]+$/.test(currentTrimmed)) {
+      if (
+        currentTrimmed &&
+        !currentTrimmed.startsWith("Nr Calls") &&
+        !/^[_-]+$/.test(currentTrimmed)
+      ) {
         section.rows.push({
           line: cursor,
-          text: current
+          text: current,
         });
       }
       cursor += 1;
@@ -283,26 +286,26 @@ function collectJournalSections(lines) {
   const sections = [];
   const patterns = [
     {
-      type: 'allFunctions',
+      type: "allFunctions",
       start: /^START JOURNALLED_TIMES_IN_ALL_FUNCTIONS/i,
-      end: /^END JOURNALLED_TIMES_IN_ALL_FUNCTIONS/i
+      end: /^END JOURNALLED_TIMES_IN_ALL_FUNCTIONS/i,
     },
     {
-      type: 'topLevel',
+      type: "topLevel",
       start: /^START JOURNALLED_TIMES_IN_TOP_LEVEL_FUNCTIONS/i,
-      end: /^END JOURNALLED_TIMES_IN_TOP_LEVEL_FUNCTIONS/i
+      end: /^END JOURNALLED_TIMES_IN_TOP_LEVEL_FUNCTIONS/i,
     },
     {
-      type: 'summary',
+      type: "summary",
       start: /^START JOURNALLED_TIMES(?:\s|$)/i,
-      end: /^END JOURNALLED_TIMES(?:\s|$)/i
-    }
+      end: /^END JOURNALLED_TIMES(?:\s|$)/i,
+    },
   ];
 
   for (let i = 0; i < lines.length; i += 1) {
-    const rawLine = lines[i] ?? '';
+    const rawLine = lines[i] ?? "";
     const trimmed = rawLine.trim();
-    if (!trimmed.startsWith('START JOURNALLED_TIMES')) {
+    if (!trimmed.startsWith("START JOURNALLED_TIMES")) {
       continue;
     }
     const pattern = patterns.find((item) => item.start.test(trimmed));
@@ -312,7 +315,7 @@ function collectJournalSections(lines) {
     let cursor = i + 1;
     let endLine = i;
     while (cursor < lines.length) {
-      const candidate = (lines[cursor] ?? '').trim();
+      const candidate = (lines[cursor] ?? "").trim();
       if (pattern.end.test(candidate)) {
         endLine = cursor;
         break;
@@ -322,16 +325,17 @@ function collectJournalSections(lines) {
     if (cursor === lines.length) {
       endLine = Math.max(i, lines.length - 1);
     }
-    const rows = pattern.type === 'summary'
-      ? []
-      : collectJournalRows(lines, i + 1, endLine - 1);
+    const rows =
+      pattern.type === "summary"
+        ? []
+        : collectJournalRows(lines, i + 1, endLine - 1);
     const summaryLines = [];
     for (let j = i + 1; j <= Math.min(endLine, i + 8); j += 1) {
-      const candidate = (lines[j] ?? '').trim();
+      const candidate = (lines[j] ?? "").trim();
       if (!candidate) {
         continue;
       }
-      if (candidate.startsWith('@*') || candidate.startsWith('START ')) {
+      if (candidate.startsWith("@*") || candidate.startsWith("START ")) {
         continue;
       }
       summaryLines.push(candidate);
@@ -344,7 +348,7 @@ function collectJournalSections(lines) {
       line: i,
       endLine,
       rows,
-      summary: summaryLines.join(' ').trim()
+      summary: summaryLines.join(" ").trim(),
     });
   }
   return sections;
@@ -353,13 +357,16 @@ function collectJournalSections(lines) {
 function collectJournalRows(lines, start, end) {
   const rows = [];
   for (let i = start; i <= end; i += 1) {
-    const raw = lines[i] ?? '';
+    const raw = lines[i] ?? "";
     const trimmed = raw.trim();
-    if (!trimmed.startsWith('@*')) {
+    if (!trimmed.startsWith("@*")) {
       continue;
     }
-    const body = trimmed.replace(/^@\*\s*/, '');
-    const segments = body.split(/\s{2,}/).map((segment) => segment.trim()).filter(Boolean);
+    const body = trimmed.replace(/^@\*\s*/, "");
+    const segments = body
+      .split(/\s{2,}/)
+      .map((segment) => segment.trim())
+      .filter(Boolean);
     if (!segments.length) {
       continue;
     }
@@ -373,9 +380,11 @@ function collectJournalRows(lines, start, end) {
     if (Number.isNaN(numericPercent)) {
       continue;
     }
-    const functionName = (segments.length > 6
-      ? segments.slice(6).join(' ')
-      : segments[segments.length - 1])?.trim();
+    const functionName = (
+      segments.length > 6
+        ? segments.slice(6).join(" ")
+        : segments[segments.length - 1]
+    )?.trim();
     if (!functionName) {
       continue;
     }
@@ -388,7 +397,7 @@ function collectJournalRows(lines, start, end) {
       dbTrips,
       callCount,
       average,
-      functionName
+      functionName,
     });
   }
   return rows;
@@ -398,29 +407,31 @@ function collectJournalHierarchyTraces(lines) {
   const sections = [];
   const startPattern = /^START JOURNAL_HIERARCHY_TRACE\b/i;
   const endPattern = /^END JOURNAL_HIERARCHY_TRACE\b/i;
-  const rowRegex = /^\s*(\d+)\s+(\d+)\s+([0-9]+(?:\.[0-9]+)?)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.*)$/;
+  const rowRegex =
+    /^\s*(\d+)\s+(\d+)\s+([0-9]+(?:\.[0-9]+)?)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.*)$/;
 
   for (let index = 0; index < lines.length; index += 1) {
-    const raw = lines[index] ?? '';
+    const raw = lines[index] ?? "";
     const trimmed = raw.trim();
     if (!startPattern.test(trimmed)) {
       continue;
     }
 
-    const version = trimmed.replace(/^START JOURNAL_HIERARCHY_TRACE\s*/i, '').trim() || null;
+    const version =
+      trimmed.replace(/^START JOURNAL_HIERARCHY_TRACE\s*/i, "").trim() || null;
     let cursor = index + 1;
     let endLine = index;
     let header = null;
     const rows = [];
 
     while (cursor < lines.length) {
-      const current = lines[cursor] ?? '';
+      const current = lines[cursor] ?? "";
       const currentTrimmed = current.trim();
       if (endPattern.test(currentTrimmed)) {
         endLine = cursor;
         break;
       }
-      if (!header && currentTrimmed.startsWith('%Total')) {
+      if (!header && currentTrimmed.startsWith("%Total")) {
         header = currentTrimmed;
       } else {
         const match = rowRegex.exec(current);
@@ -464,13 +475,13 @@ function collectAccessChecks(lines) {
   const entries = [];
   const regex = /^AM_check_priv\s*\(([^)]+)\)\s*on\s*(\S+)/i;
   for (let line = 0; line < lines.length; line += 1) {
-    const raw = lines[line] ?? '';
+    const raw = lines[line] ?? "";
     const match = regex.exec(raw);
     if (!match) {
       continue;
     }
-    const mode = match[1]?.trim() ?? '';
-    const target = match[2]?.trim() ?? '';
+    const mode = match[1]?.trim() ?? "";
+    const target = match[2]?.trim() ?? "";
     entries.push({
       line,
       raw,
@@ -483,22 +494,23 @@ function collectAccessChecks(lines) {
 
 function collectWorkflowHandlers(lines) {
   const entries = [];
-  const enterPattern = /^-->\s+ENTER\s+Function\s+"([^"]+)"\s+\{\s*\(File\s+\[(.*?)\]\)/i;
+  const enterPattern =
+    /^-->\s+ENTER\s+Function\s+"([^"]+)"\s+\{\s*\(File\s+\[(.*?)\]\)/i;
   const leavePattern = /^<--\s+LEAVE\s+Function\s+"([^"]+)"/i;
 
   for (let index = 0; index < lines.length; index += 1) {
-    const raw = lines[index] ?? '';
+    const raw = lines[index] ?? "";
     const enterMatch = enterPattern.exec(raw);
     if (!enterMatch) {
       continue;
     }
 
-    const functionName = enterMatch[1]?.trim() ?? '';
-    const filePath = enterMatch[2]?.trim() ?? '';
+    const functionName = enterMatch[1]?.trim() ?? "";
+    const filePath = enterMatch[2]?.trim() ?? "";
 
     let leaveLine = index;
     for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
-      const leaveRaw = lines[cursor] ?? '';
+      const leaveRaw = lines[cursor] ?? "";
       if (leavePattern.test(leaveRaw)) {
         leaveLine = cursor;
         break;
@@ -520,12 +532,15 @@ function collectWorkflowHandlers(lines) {
 function collectInlineSqlLines(lines) {
   const matches = [];
   for (let i = 0; i < lines.length; i += 1) {
-    const original = lines[i] ?? '';
+    const original = lines[i] ?? "";
     const trimmed = original.trim();
     if (!trimmed) {
       continue;
     }
-    if (trimmed.startsWith('START SQL_PROFILE_DUMP') || trimmed.startsWith('END SQL_PROFILE_DUMP')) {
+    if (
+      trimmed.startsWith("START SQL_PROFILE_DUMP") ||
+      trimmed.startsWith("END SQL_PROFILE_DUMP")
+    ) {
       continue;
     }
     if (isInlineSqlText(trimmed)) {
@@ -535,39 +550,51 @@ function collectInlineSqlLines(lines) {
   return matches;
 }
 
-
-
 function collectLogLines(lines) {
   const entries = [];
   for (let i = 0; i < lines.length; i += 1) {
-    const lineText = lines[i] ?? '';
+    const lineText = lines[i] ?? "";
     const match = LOG_LINE_REGEX.exec(lineText);
     if (!match) {
       continue;
     }
 
-    const levelText = match[1] ?? '';
-    const timestampText = match[2] ?? '';
-    const idRaw = match[3] ?? '';
-    const messageRaw = match[4] ?? '';
+    const levelText = match[1] ?? "";
+    const timestampText = match[2] ?? "";
+    const idRaw = match[3] ?? "";
+    const messageRaw = match[4] ?? "";
 
     const levelStart = lineText.indexOf(levelText);
-    const levelEnd = levelStart >= 0 ? levelStart + levelText.length : levelText.length;
+    const levelEnd =
+      levelStart >= 0 ? levelStart + levelText.length : levelText.length;
 
-    const timestampStart = timestampText ? lineText.indexOf(timestampText, levelEnd ?? 0) : -1;
-    const timestampEnd = timestampStart >= 0 ? timestampStart + timestampText.length : null;
+    const timestampStart = timestampText
+      ? lineText.indexOf(timestampText, levelEnd ?? 0)
+      : -1;
+    const timestampEnd =
+      timestampStart >= 0 ? timestampStart + timestampText.length : null;
 
     const idValue = idRaw.trim();
-    const idRawIndex = idValue ? lineText.indexOf(idRaw, timestampEnd ?? 0) : -1;
+    const idRawIndex = idValue
+      ? lineText.indexOf(idRaw, timestampEnd ?? 0)
+      : -1;
     const idLeadingSpaces = idRaw.length - idRaw.trimStart().length;
     const idStart = idRawIndex >= 0 ? idRawIndex + idLeadingSpaces : -1;
     const idEnd = idStart >= 0 ? idStart + idValue.length : null;
 
     const messageValue = messageRaw.trim();
-    const messageRawIndex = messageValue ? lineText.indexOf(messageRaw, (idRawIndex >= 0 ? idRawIndex + idRaw.length : (timestampEnd ?? 0))) : -1;
-    const messageLeadingSpaces = messageRaw.length - messageRaw.trimStart().length;
-    const messageStart = messageRawIndex >= 0 ? messageRawIndex + messageLeadingSpaces : -1;
-    const messageEnd = messageStart >= 0 ? messageStart + messageValue.length : null;
+    const messageRawIndex = messageValue
+      ? lineText.indexOf(
+          messageRaw,
+          idRawIndex >= 0 ? idRawIndex + idRaw.length : timestampEnd ?? 0
+        )
+      : -1;
+    const messageLeadingSpaces =
+      messageRaw.length - messageRaw.trimStart().length;
+    const messageStart =
+      messageRawIndex >= 0 ? messageRawIndex + messageLeadingSpaces : -1;
+    const messageEnd =
+      messageStart >= 0 ? messageStart + messageValue.length : null;
     const isInlineSql = isInlineSqlText(messageValue);
 
     entries.push({
@@ -584,7 +611,7 @@ function collectLogLines(lines) {
       idEnd,
       messageStart: messageStart >= 0 ? messageStart : null,
       messageEnd,
-      isInlineSql
+      isInlineSql,
     });
   }
   return entries;
@@ -606,7 +633,9 @@ export function parseTeamcenterLog(content) {
 
   const heuristicSql = collectSqlSections(lines);
   if (Array.isArray(result.sqlDumps) && result.sqlDumps.length) {
-    const heuristicsByLine = new Map(heuristicSql.map((section) => [section.line, section]));
+    const heuristicsByLine = new Map(
+      heuristicSql.map((section) => [section.line, section])
+    );
     const merged = result.sqlDumps.map((section) => {
       const fallback = heuristicsByLine.get(section.line);
       if (fallback) {
@@ -614,13 +643,13 @@ export function parseTeamcenterLog(content) {
         return {
           line: section.line ?? fallback.line,
           endLine: section.endLine ?? fallback.endLine,
-          rows: section.rows?.length ? section.rows : fallback.rows
+          rows: section.rows?.length ? section.rows : fallback.rows,
         };
       }
       return {
         line: section.line ?? 0,
         endLine: section.endLine ?? section.line ?? 0,
-        rows: section.rows ?? []
+        rows: section.rows ?? [],
       };
     });
     for (const leftover of heuristicsByLine.values()) {
@@ -641,13 +670,14 @@ export function parseTeamcenterLog(content) {
       inlineLogSet.set(entry.line, entry);
     }
   }
-  const heuristicInline = collectInlineSqlLines(lines)
-    .filter((item) => !inlineLogSet.has(item.line));
+  const heuristicInline = collectInlineSqlLines(lines).filter(
+    (item) => !inlineLogSet.has(item.line)
+  );
   result.inlineSqlLines = [
     ...(inlineLogSet.size
       ? Array.from(inlineLogSet.values()).map((entry) => ({
           line: entry.line,
-          text: entry.message ?? lines[entry.line] ?? '',
+          text: entry.message ?? lines[entry.line] ?? "",
           fromLog: true,
         }))
       : []),
