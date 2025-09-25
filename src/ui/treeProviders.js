@@ -4,7 +4,7 @@ import { truncate } from "../util/helpers.js";
 
 /**
  * Tree data providers power the primary explorer views. Keeping them together makes it clear which
- * nodes are exposed to the VS Code UI layer.
+ * syslog nodes are exposed to the VS Code UI layer.
  */
 export class SyslogTreeDataProvider {
   constructor() {

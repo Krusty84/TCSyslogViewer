@@ -1,14 +1,13 @@
 grammar TeamcenterLog;
 
 @header {
-  // Для TS: import { ANTLRInputStream, CommonTokenStream } from 'antlr4ts';
 }
 
 logFile
   : (header | systemInfo | logLine | envSection | dllSection | sqlDump | journalSection | pomStats | endSession | truncated | otherLine)* EOF
   ;
 
-// Общие правила
+// General rules
 header
   : '***' .*? NEWLINE '*** system log created by' .*? NEWLINE
   ;
@@ -78,22 +77,22 @@ truncated
   ;
 
 otherLine
-  : .*? NEWLINE  // Для нераспознанных строк, чтоб не ломать парсинг
+  : .*? NEWLINE  // For any unparsed lines
   ;
 
-// Лексер rules
+// Rules lexer
 LEVEL: 'INFO' | 'DEBUG' | 'NOTE' | 'WARN' | 'ERROR' | 'FATAL';
 TIMESTAMP: DIGIT DIGIT DIGIT DIGIT '/' DIGIT DIGIT '/' DIGIT DIGIT '-' DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT ('.' DIGIT+)?;
-ID: 'NoID' | 'NoId' | 'InitializeModule.' [A-Z_0-9]+ | [A-Za-z0-9.]+;  // Расширил для FF22TC133.05784.tcserver00003 и т.п.
-MESSAGE: ~[\r\n]+;  // Всё до новой строки
+ID: 'NoID' | 'NoId' | 'InitializeModule.' [A-Z_0-9]+ | [A-Za-z0-9.]+;
+MESSAGE: ~[\r\n]+;  // For new lines
 
-KEY: [A-Za-z0-9_]+;  // Для env vars, типа TC_BIN
-VALUE: ~[\r\n]+;     // Значение после =
+KEY: [A-Za-z0-9_]+;  // For env's, like TC_BIN
+VALUE: ~[\r\n]+;     // Values after =
 
 PATH: [A-Za-z] ':' '\\' ~[\r\n]*;
-VERSION: [0-9.()a-zA-Z]+;  // Версии типа 13.3(20211122.00)
-ADDR: [0-9a-f]+;           // Адреса типа 7ffda3aa0000
-SIZE: [0-9a-f]+;           // Размеры типа 1cf000
+VERSION: [0-9.()a-zA-Z]+;  // Version, like 13.3(20211122.00)
+ADDR: [0-9a-f]+;           // Hex address 7ffda3aa0000
+SIZE: [0-9a-f]+;           // Size of shift 1cf000
 HASH: [0-9a-f-]+ ('-' [0-9a-f-]+)*;
 DATE: [0-9]{2} '-' [A-Za-z]{3} '-' [0-9]{4} ' ' [0-9]+ ':' [0-9]+;
 
@@ -104,10 +103,10 @@ DBTIME: DIGIT+ '.' DIGIT+;
 EXECTIME: DIGIT+ '.' DIGIT+;
 TRIPS: ('-'? DIGIT+ | '-1');
 ROWS: ('-'? DIGIT+ | '-1');
-SQL_QUERY: 'SELECT' ~[\r\n]*;  // Начало запроса
-SQL_CONTINUATION: WS+ ~[\r\n]+;  // Продолжение мультилайн SQL
+SQL_QUERY: 'SELECT' ~[\r\n]*;  // Start query
+SQL_CONTINUATION: WS+ ~[\r\n]+;  // For multiline SQL sentences
 
-HIERARCHY_PREFIX: '@'*;  // @* для иерархии
+HIERARCHY_PREFIX: '@'*;  // @* for hierarchy
 PERC_TOTAL: DIGIT+;      // %Total
 PERC_PARENT: DIGIT+;     // %Parent
 DB_TRIPS: DIGIT+;        // DB Trips

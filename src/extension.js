@@ -1,11 +1,10 @@
 import * as vscode from "vscode";
 
-import { SyslogController } from "./business/syslogController.js";
+import { SyslogController } from "./logic/syslogController.js";
 import { registerUserCommands } from "./interactions/userInteractions.js";
 
 /**
- * Entry point for the TC Syslog viewer extension. Wiring is intentionally light: we delegate to
- * specialised modules for UI, business logic, and user interactions.
+ * Entry point for the TC Syslog viewer extension.
  */
 export function activate(context) {
   const controller = new SyslogController(context);
@@ -14,6 +13,4 @@ export function activate(context) {
   registerUserCommands(context, controller);
 }
 
-export function deactivate() {
-  // Nothing to clean up explicitly; disposables are registered with the context.
-}
+export function deactivate() {}

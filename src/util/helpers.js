@@ -1,8 +1,7 @@
 import path from "node:path";
 
 /**
- * Generic helpers used by multiple layers of the TC Syslog viewer extension. Keeping them together
- * reduces duplication and makes future maintenance easier when log parsing evolves.
+ * Generic helpers used by multiple layers of the TC Syslog viewer extension.
  */
 export function winBasename(filePath) {
   if (!filePath) {
@@ -30,7 +29,10 @@ export function highlightMatchInLine(lineText, column, length) {
   if (end <= start) {
     return lineText;
   }
-  return `${lineText.slice(0, start)}[${lineText.slice(start, end)}]${lineText.slice(end)}`;
+  return `${lineText.slice(0, start)}[${lineText.slice(
+    start,
+    end
+  )}]${lineText.slice(end)}`;
 }
 
 export function sanitizeForUntitledLabel(text) {
