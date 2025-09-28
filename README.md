@@ -23,7 +23,7 @@ It parses large logs, organises their content into rich explorer views, and prov
 
 Developers, QA specialists, pre-sales specialists, etc., working with Teamcenter through the back door :)
 
-## Commands
+## 💊 Commands
 
 | Command | Description |
 | --- | --- |
