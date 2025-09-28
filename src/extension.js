@@ -1,5 +1,5 @@
 import { SyslogController } from "./core/syslogController.js";
-import { registerUserCommands } from "./ui/interactions/userInteractions.js";
+import { registerUserCommands } from "./ui/general/userInteractions.js";
 import { leftSidePanel } from "./ui/panels/leftSidePanel/leftSidePanel.js";
 import { centerBottomPanel } from "./ui/panels/centerBottomPanel/centerBottomPanel.js";
 

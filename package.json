@@ -16,8 +16,8 @@
   "activationEvents": [
     "onStartupFinished",
     "onCommand:tcSyslogViewer.refresh",
-    "onCommand:tcSyslogViewer.copyCategory",
-    "onCommand:tcSyslogViewer.copyEntry",
+    "onCommand:tcSyslogViewer.openCategory",
+    "onCommand:tcSyslogViewer.openEntry",
     "onCommand:tcSyslogViewer.addFavorite",
     "onCommand:tcSyslogViewer.editFavorite",
     "onCommand:tcSyslogViewer.removeFavorite",
@@ -37,11 +37,11 @@
         "title": "TC Syslog Viewer: Refresh Sylog File"
       },
       {
-        "command": "tcSyslogViewer.copyCategory",
+        "command": "tcSyslogViewer.openCategory",
         "title": "TC Syslog Viewer: Open Category"
       },
       {
-        "command": "tcSyslogViewer.copyEntry",
+        "command": "tcSyslogViewer.openEntry",
         "title": "TC Syslog: Open Entry"
       },
       {
@@ -118,11 +118,11 @@
           "when": "true"
         },
         {
-          "command": "tcSyslogViewer.copyCategory",
+          "command": "tcSyslogViewer.openCategory",
           "when": "true"
         },
         {
-          "command": "tcSyslogViewer.copyEntry",
+          "command": "tcSyslogViewer.openEntry",
           "when": "true"
         },
         {
@@ -152,19 +152,19 @@
       ],
       "view/item/context": [
         {
-          "command": "tcSyslogViewer.copyCategory",
+          "command": "tcSyslogViewer.openCategory",
           "when": "view == tcSyslogViewerBasic && viewItem == syslogCategory"
         },
         {
-          "command": "tcSyslogViewer.copyCategory",
+          "command": "tcSyslogViewer.openCategory",
           "when": "view == tcSyslogViewerExtra && viewItem == syslogCategory"
         },
         {
-          "command": "tcSyslogViewer.copyCategory",
+          "command": "tcSyslogViewer.openCategory",
           "when": "view == tcSyslogViewerBasic && viewItem == syslogGroup"
         },
         {
-          "command": "tcSyslogViewer.copyCategory",
+          "command": "tcSyslogViewer.openCategory",
           "when": "view == tcSyslogViewerExtra && viewItem == syslogGroup"
         },
         {
@@ -172,11 +172,11 @@
           "when": "view == tcSyslogViewerOccurrences && viewItem == syslogOccurrencesResult"
         },
         {
-          "command": "tcSyslogViewer.copyEntry",
+          "command": "tcSyslogViewer.openEntry",
           "when": "view == tcSyslogViewerBasic && viewItem == syslogEntry"
         },
         {
-          "command": "tcSyslogViewer.copyEntry",
+          "command": "tcSyslogViewer.openEntry",
           "when": "view == tcSyslogViewerExtra && viewItem == syslogEntry"
         },
         {
