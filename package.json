@@ -3,14 +3,30 @@
   "displayName": "TC Syslog Viewer",
   "description": "Syntax color + Explorer for Teamcenter (Siemens Digital Industries Software) syslog files.",
   "version": "1.0.0",
-  "publisher": "Alexey Sedoykin",
+  "publisher": "AlexeySedoykin",
+  "icon": "media/icon.png",
   "engines": {
     "vscode": "^1.92.0"
   },
   "categories": [
-    "Programming Languages",
+    "Debuggers",
+    "Visualization",
     "Other"
   ],
+  "keywords": [
+    "Teamcenter",
+    "TC",
+    "syslog",
+    "tcserver",
+    "analysis",
+    "PLM",
+    "Siemens",
+    "Siemens Digital Industries Software"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Krusty84/TCSyslogViewer.git"
+  },
   "type": "module",
   "main": "./src/extension.js",
   "activationEvents": [
