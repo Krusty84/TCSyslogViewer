@@ -1,4 +1,4 @@
-grammar TeamcenterLog;
+grammar tcServerSyslogGrammar;
 
 @header {
 }

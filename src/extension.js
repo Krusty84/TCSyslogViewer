@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
-import { SyslogController } from "./logic/syslogController.js";
-import { registerUserCommands } from "./interactions/userInteractions.js";
+import { SyslogController } from "./core/syslogController.js";
+import { registerUserCommands } from "./ui/interactions/userInteractions.js";
 
 /**
  * Entry point for the TC Syslog viewer extension.

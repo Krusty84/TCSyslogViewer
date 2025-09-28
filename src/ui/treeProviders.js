@@ -1,10 +1,9 @@
 import * as vscode from "vscode";
-import { NODE_CONTEXT } from "../constants.js";
+import { NODE_CONTEXT } from "../util/constants.js";
 import { truncate } from "../util/helpers.js";
 
 /**
- * Tree data providers power the primary explorer views. Keeping them together makes it clear which
- * syslog nodes are exposed to the VS Code UI layer.
+ * Tree data providers power the primary explorer views.
  */
 export class SyslogTreeDataProvider {
   constructor() {
@@ -51,7 +50,7 @@ export class SyslogTreeDataProvider {
     }
     if (node.line !== undefined && node.line !== null && this.model.resource) {
       item.command = {
-        command: "tcSyslog.revealLine",
+        command: "tcSyslogViewer.revealLine",
         title: "Reveal in Editor",
         arguments: [this.model.resource, node.line],
       };
@@ -111,7 +110,7 @@ export class FavoritesTreeDataProvider {
       this.model.resource
     ) {
       item.command = {
-        command: "tcSyslog.revealLine",
+        command: "tcSyslogViewer.revealLine",
         title: "Reveal in Editor",
         arguments: [this.model.resource, node.line],
       };
@@ -120,7 +119,7 @@ export class FavoritesTreeDataProvider {
   }
 }
 
-export class MentionsTreeDataProvider {
+export class OccurrencesTreeDataProvider {
   constructor() {
     this._onDidChangeTreeData = new vscode.EventEmitter();
     this.onDidChangeTreeData = this._onDidChangeTreeData.event;
@@ -132,7 +131,7 @@ export class MentionsTreeDataProvider {
     const normalizedMatches = (matches ?? []).map((match, index) => ({
       ...match,
       type: "match",
-      id: `mentions:match:${sessionId}:${index}`,
+      id: `occurrences:match:${sessionId}:${index}`,
       sessionId,
       resource,
       query,
@@ -146,12 +145,12 @@ export class MentionsTreeDataProvider {
       matches: normalizedMatches,
       treeNode: {
         type: "session",
-        id: `mentions:session:${sessionId}`,
+        id: `occurrences:session:${sessionId}`,
         sessionId,
       },
       summaryNode: {
         type: "summary",
-        id: `mentions:summary:${sessionId}`,
+        id: `occurrences:summary:${sessionId}`,
         sessionId,
       },
     };
@@ -224,7 +223,7 @@ export class MentionsTreeDataProvider {
       }
       treeItem.tooltip = tooltipLines.join("\n");
       treeItem.iconPath = new vscode.ThemeIcon("search");
-      treeItem.contextValue = "syslogMentionsSession";
+      treeItem.contextValue = "syslogOccurrencesResult";
       return treeItem;
     }
 
@@ -244,7 +243,7 @@ export class MentionsTreeDataProvider {
       const timestamp = session.createdAt.toLocaleString();
       summaryItem.tooltip = `${summaryLabel}\n${timestamp}`;
       summaryItem.iconPath = new vscode.ThemeIcon("list-selection");
-      summaryItem.contextValue = "syslogMentionsSummary";
+      summaryItem.contextValue = "syslogOccurrencesSummary";
       summaryItem.description = session.truncated
         ? "Results truncated"
         : undefined;
@@ -261,7 +260,7 @@ export class MentionsTreeDataProvider {
       item.description = `Line ${lineNumber}`;
       item.tooltip = `Line ${lineNumber}, Column ${(node.column ?? 0) + 1}`;
       item.command = {
-        command: "tcSyslog.revealLine",
+        command: "tcSyslogViewer.revealLine",
         title: "Reveal Mention",
         arguments: [
           node.resource,
@@ -275,7 +274,7 @@ export class MentionsTreeDataProvider {
         ],
       };
       item.iconPath = new vscode.ThemeIcon("search");
-      item.contextValue = "syslogMentionsMatch";
+      item.contextValue = "syslogOccurrencesMatch";
       return item;
     }
 

@@ -1,7 +1,7 @@
 import antlr4 from "antlr4";
-import TeamcenterLogLexer from "./antlr/generated/TeamcenterLogLexer.js";
-import TeamcenterLogParser from "./antlr/generated/TeamcenterLogParser.js";
-import TeamcenterLogVisitor from "./antlr/generated/TeamcenterLogVisitor.js";
+import TeamcenterLogLexer from "./antlr/generated/tcServerSyslogGrammarLexer.js";
+import TeamcenterLogParser from "./antlr/generated/tcServerSyslogGrammarParser.js";
+import TeamcenterLogVisitor from "./antlr/generated/tcServerSyslogGrammarVisitor.js";
 
 const LOG_LINE_REGEX =
   /^(INFO|DEBUG|NOTE|WARN|ERROR|FATAL)\s*-\s*([0-9]{4}\/[0-9]{2}\/[0-9]{2}-[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?)\s+UTC\s*-\s*(.+?)\s*-\s*(.*)$/;
@@ -295,11 +295,11 @@ function collectJournalSections(lines) {
       start: /^START JOURNALLED_TIMES_IN_TOP_LEVEL_FUNCTIONS/i,
       end: /^END JOURNALLED_TIMES_IN_TOP_LEVEL_FUNCTIONS/i,
     },
-    {
-      type: "summary",
-      start: /^START JOURNALLED_TIMES(?:\s|$)/i,
-      end: /^END JOURNALLED_TIMES(?:\s|$)/i,
-    },
+    // {
+    //   type: "summary",
+    //   start: /^START JOURNALLED_TIMES(?:\s|$)/i,
+    //   end: /^END JOURNALLED_TIMES(?:\s|$)/i,
+    // },
   ];
 
   for (let i = 0; i < lines.length; i += 1) {

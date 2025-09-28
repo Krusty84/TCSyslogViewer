@@ -1,11 +1,11 @@
 import * as vscode from "vscode";
-import { parseTeamcenterLog } from "../parse/teamcenterLogParser.js";
+import { parseTeamcenterLog } from "../parse/tcServerSyslogParser.js";
 
 import {
   LEVEL_ORDER,
   LEVEL_CONFIG_OVERRIDES,
-  FIND_MENTIONS_LIMIT,
-} from "../constants.js";
+  FIND_OCCURRENCES_LIMIT,
+} from "../util/constants.js";
 import {
   collectNodeClipboardTexts,
   highlightMatchInLine,
@@ -14,7 +14,7 @@ import {
   truncate,
 } from "../util/helpers.js";
 import {
-  MentionsTreeDataProvider,
+  OccurrencesTreeDataProvider,
   SyslogTreeDataProvider,
 } from "../ui/treeProviders.js";
 import { FavoritesManager } from "./favoritesManager.js";
@@ -28,12 +28,12 @@ export class SyslogController {
   constructor(context) {
     this.context = context;
     this.treeDataProvider = new SyslogTreeDataProvider();
-    this.treeView = vscode.window.createTreeView("tcSyslogBasic", {
+    this.treeView = vscode.window.createTreeView("tcSyslogViewerBasic", {
       treeDataProvider: this.treeDataProvider,
     });
     this.treeView.message = "Open a .syslog file to see parsed categories.";
     this.extraTreeDataProvider = new SyslogTreeDataProvider();
-    this.extraTreeView = vscode.window.createTreeView("tcSyslogExtra", {
+    this.extraTreeView = vscode.window.createTreeView("tcSyslogViewerExtra", {
       treeDataProvider: this.extraTreeDataProvider,
     });
     this.extraTreeView.message = "Open a .syslog file to see extra categories.";
@@ -57,18 +57,22 @@ export class SyslogController {
     this.baseFontDecorationType = undefined;
     this.latestParsed = null;
     this.favoritesManager = new FavoritesManager(this, context);
-    this.mentionsDataProvider = new MentionsTreeDataProvider();
-    this.mentionsView = vscode.window.createTreeView("tcSyslogMentions", {
-      treeDataProvider: this.mentionsDataProvider,
-    });
-    this.mentionsView.message = "Run Find All Mentions to populate results.";
+    this.occurrencesDataProvider = new OccurrencesTreeDataProvider();
+    this.occurrencesView = vscode.window.createTreeView(
+      "tcSyslogViewerOccurrences",
+      {
+        treeDataProvider: this.occurrencesDataProvider,
+      }
+    );
+    this.occurrencesView.message =
+      "Run Find All Occurrences to populate results.";
     this.previewDocuments = new Set();
     this.context.subscriptions.push(this.treeView);
     this.context.subscriptions.push(this.extraTreeView);
     this.context.subscriptions.push({
       dispose: () => this.disposeDecorationTypes(),
     });
-    this.context.subscriptions.push(this.mentionsView);
+    this.context.subscriptions.push(this.occurrencesView);
 
     this.reloadDecorationTypes();
 
@@ -113,15 +117,15 @@ export class SyslogController {
       return true;
     }
     return (
-      event.affectsConfiguration("tcSyslog.colors") ||
-      event.affectsConfiguration("tcSyslog.font")
+      event.affectsConfiguration("tcSyslogViewer.colors") ||
+      event.affectsConfiguration("tcSyslogViewer.font")
     );
   }
 
   reloadDecorationTypes() {
     // Decorations are recreated so configuration changes (colors, fonts) take effect immediately.
     this.disposeDecorationTypes();
-    const config = vscode.workspace.getConfiguration("tcSyslog");
+    const config = vscode.workspace.getConfiguration("tcSyslogViewer");
     const levelDefaults = {
       FATAL: { fg: "#ff00aa", bg: "#ff00aa22" },
       ERROR: { fg: "#ff4242", bg: "#ff424222" },
@@ -835,9 +839,10 @@ export class SyslogController {
     this.treeView.message = message;
     this.extraTreeView.message = "Open a .syslog file to see extra categories.";
     this.favoritesManager.clear();
-    this.mentionsDataProvider.clear();
-    if (this.mentionsView) {
-      this.mentionsView.message = "Run Find All Mentions to populate results.";
+    this.occurrencesDataProvider.clear();
+    if (this.occurrencesView) {
+      this.occurrencesView.message =
+        "Run Find All Occurrences to populate results.";
     }
   }
 
@@ -1192,34 +1197,34 @@ export class SyslogController {
     return null;
   }
 
-  async findAllMentions() {
-    const context = this.prepareMentionsSearchContext();
+  async findAllOccurrences() {
+    const context = this.prepareOccurrencesSearchContext();
     if (!context) {
       return;
     }
 
     const { document, needle, haystack } = context;
-    const { matches, truncated } = this.collectMentionsMatches(
+    const { matches, truncated } = this.collectOccurrencesMatches(
       document,
       haystack,
       needle
     );
 
     if (!matches.length) {
-      this.handleNoMentionsFound(needle);
+      this.handleNoOccurrencesFound(needle);
       return;
     }
 
-    const session = this.mentionsDataProvider.addSession({
+    const session = this.occurrencesDataProvider.addSession({
       resource: document.uri,
       query: needle,
       matches,
       truncated,
     });
 
-    if (this.mentionsView) {
-      this.mentionsView.message = truncated
-        ? `Showing first ${matches.length} mentions for "${truncate(
+    if (this.occurrencesView) {
+      this.occurrencesView.message = truncated
+        ? `Showing first ${matches.length} occurrences for "${truncate(
             needle,
             60
           )}".`
@@ -1227,11 +1232,11 @@ export class SyslogController {
     }
 
     await vscode.commands.executeCommand(
-      "workbench.view.extension.tcSyslogPanel"
+      "workbench.view.extension.tcSyslogViewerPanel"
     );
-    if (this.mentionsView) {
+    if (this.occurrencesView) {
       try {
-        await this.mentionsView.reveal(session.treeNode, {
+        await this.occurrencesView.reveal(session.treeNode, {
           expand: true,
           focus: false,
           select: false,
@@ -1242,7 +1247,7 @@ export class SyslogController {
       const firstMatch = session.matches[0];
       if (firstMatch) {
         try {
-          await this.mentionsView.reveal(firstMatch, {
+          await this.occurrencesView.reveal(firstMatch, {
             focus: false,
             select: false,
           });
@@ -1253,43 +1258,43 @@ export class SyslogController {
     }
   }
 
-  async findAllMentionsInEditor() {
-    const context = this.prepareMentionsSearchContext();
+  async findAllOccurrencesOpenInEditor() {
+    const context = this.prepareOccurrencesSearchContext();
     if (!context) {
       return;
     }
 
     const { document, needle, haystack } = context;
-    const { matches, truncated } = this.collectMentionsMatches(
+    const { matches, truncated } = this.collectOccurrencesMatches(
       document,
       haystack,
       needle
     );
 
     if (!matches.length) {
-      this.handleNoMentionsFound(needle);
+      this.handleNoOccurrencesFound(needle);
       return;
     }
 
-    this.mentionsDataProvider.addSession({
+    this.occurrencesDataProvider.addSession({
       resource: document.uri,
       query: needle,
       matches,
       truncated,
     });
-    if (this.mentionsView) {
-      this.mentionsView.message = truncated
-        ? `Showing first ${matches.length} mentions for "${truncate(
+    if (this.occurrencesView) {
+      this.occurrencesView.message = truncated
+        ? `Showing first ${matches.length} occurrences for "${truncate(
             needle,
             60
           )}".`
         : undefined;
     }
 
-    await this.openMentionsDocument(document, needle, matches, truncated);
+    await this.openOccurrencesDocument(document, needle, matches, truncated);
   }
 
-  prepareMentionsSearchContext() {
+  prepareOccurrencesSearchContext() {
     const editor = vscode.window.activeTextEditor;
     if (!editor || !isSyslogDocument(editor.document)) {
       vscode.window.showInformationMessage(
@@ -1304,7 +1309,7 @@ export class SyslogController {
     const needle = selectedText.trim();
     if (!needle) {
       vscode.window.showInformationMessage(
-        "TC Syslog: select some text before running Find All Mentions."
+        "TC Syslog: select some text before running Find All Occurrences."
       );
       return null;
     }
@@ -1318,7 +1323,7 @@ export class SyslogController {
     return { document, needle, haystack };
   }
 
-  collectMentionsMatches(document, haystack, needle) {
+  collectOccurrencesMatches(document, haystack, needle) {
     const matches = [];
     const searchStep = Math.max(needle.length, 1);
     let searchIndex = 0;
@@ -1342,7 +1347,7 @@ export class SyslogController {
       });
 
       const nextSearchStart = foundIndex + searchStep;
-      if (matches.length >= FIND_MENTIONS_LIMIT) {
+      if (matches.length >= FIND_OCCURRENCES_LIMIT) {
         truncated = haystack.indexOf(needle, nextSearchStart) !== -1;
         break;
       }
@@ -1352,26 +1357,26 @@ export class SyslogController {
     return { matches, truncated };
   }
 
-  handleNoMentionsFound(needle) {
+  handleNoOccurrencesFound(needle) {
     vscode.window.showInformationMessage(
-      `TC Syslog: no mentions of "${truncate(needle, 80)}" found.`
+      `TC Syslog: no occurrences of "${truncate(needle, 80)}" found.`
     );
-    if (this.mentionsView && !this.mentionsDataProvider.hasSessions()) {
-      this.mentionsView.message = `No mentions found for "${truncate(
+    if (this.occurrencesView && !this.occurrencesDataProvider.hasSessions()) {
+      this.occurrencesView.message = `No occurrences found for "${truncate(
         needle,
         60
       )}".`;
     }
   }
 
-  buildMentionsDocumentContent(document, needle, matches, truncated) {
+  buildOccurrencesDocumentContent(document, needle, matches, truncated) {
     const relativePath = vscode.workspace.asRelativePath(document.uri, false);
     const absolutePath = document.uri.fsPath;
     const matchCountLabel = truncated
-      ? `${matches.length}+ (limit ${FIND_MENTIONS_LIMIT})`
+      ? `${matches.length}+ (limit ${FIND_OCCURRENCES_LIMIT})`
       : `${matches.length}`;
     const headerLines = [
-      "Find Mentions Report",
+      "Find Occurrences Report",
       `Query: "${needle}"`,
       `File: ${relativePath}`,
       `Matches: ${matchCountLabel}`,
@@ -1395,14 +1400,14 @@ export class SyslogController {
       .join("\n\n");
 
     const truncatedNote = truncated
-      ? `\n\nNote: only the first ${matches.length} matches are listed (limit ${FIND_MENTIONS_LIMIT}).`
+      ? `\n\nNote: only the first ${matches.length} matches are listed (limit ${FIND_OCCURRENCES_LIMIT}).`
       : "";
 
     return `${headerLines.join("\n")}\n\n${body}${truncatedNote}`;
   }
 
-  async openMentionsDocument(document, needle, matches, truncated) {
-    const content = this.buildMentionsDocumentContent(
+  async openOccurrencesDocument(document, needle, matches, truncated) {
+    const content = this.buildOccurrencesDocumentContent(
       document,
       needle,
       matches,
@@ -1411,7 +1416,7 @@ export class SyslogController {
     const sanitizedQuery = sanitizeForUntitledLabel(needle);
     const label = truncate(sanitizedQuery, 32) || "query";
     const untitledUri = vscode.Uri.parse(
-      `untitled:Mentions-${label}-${Date.now()}.txt`
+      `untitled:Occurrences-${label}-${Date.now()}.txt`
     );
     let uriKey;
 
@@ -1435,7 +1440,7 @@ export class SyslogController {
         editor.revealRange(new vscode.Range(start, start));
       } else {
         vscode.window.showWarningMessage(
-          "TC Syslog: unable to populate mentions document."
+          "TC Syslog: unable to populate occurrences document."
         );
         this.previewDocuments.delete(uriKey);
       }
@@ -1444,24 +1449,25 @@ export class SyslogController {
         this.previewDocuments.delete(uriKey);
       }
       vscode.window.showErrorMessage(
-        `TC Syslog: unable to open mentions document - ${
+        `TC Syslog: unable to open occurrences document - ${
           error instanceof Error ? error.message : String(error)
         }`
       );
     }
   }
 
-  closeMentionsSession(node) {
+  closeOccurrencesResult(node) {
     const sessionId =
       typeof node === "string"
         ? node
-        : node?.sessionId ?? node?.id?.replace(/^mentions:session:/, "");
+        : node?.sessionId ?? node?.id?.replace(/^occurrences:session:/, "");
     if (!sessionId) {
       return;
     }
-    this.mentionsDataProvider.removeSession(sessionId);
-    if (!this.mentionsDataProvider.hasSessions() && this.mentionsView) {
-      this.mentionsView.message = "Run Find All Mentions to populate results.";
+    this.occurrencesDataProvider.removeSession(sessionId);
+    if (!this.occurrencesDataProvider.hasSessions() && this.occurrencesView) {
+      this.occurrencesView.message =
+        "Run Find All Occurrences to populate results.";
     }
   }
 

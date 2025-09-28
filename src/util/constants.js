@@ -22,4 +22,4 @@ export const NODE_CONTEXT = {
   ENTRY: "syslogEntry",
 };
 
-export const FIND_MENTIONS_LIMIT = 500;
+export const FIND_OCCURRENCES_LIMIT = 500;

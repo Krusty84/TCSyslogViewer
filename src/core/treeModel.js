@@ -1,4 +1,4 @@
-import { NODE_CONTEXT, LEVEL_ICONS, LEVEL_ORDER } from "../constants.js";
+import { NODE_CONTEXT, LEVEL_ICONS, LEVEL_ORDER } from "../util/constants.js";
 import { truncate, winBasename, levelRank } from "../util/helpers.js";
 
 /**
@@ -209,7 +209,8 @@ export function buildTreeModel(parsed, resource) {
       }
       return {
         id: `sql:${index}:${startLine}`,
-        label: `Dump #${index + 1}`,
+        //label: `Dump #${index + 1}`,
+        label: `SQL_PROFILE_DUMP`,
         description,
         line: startLine,
         children: rowChildren,
@@ -220,7 +221,8 @@ export function buildTreeModel(parsed, resource) {
     });
     nodes.push({
       id: "root:sql",
-      label: `SQL Profile Dumps (${parsed.sqlDumps.length})`,
+      //label: `SQL Profile Dumps (${parsed.sqlDumps.length})`,
+      label: `SQL Profile Dumps`,
       children: sqlNodes,
       icon: "database",
       contextValue: NODE_CONTEXT.CATEGORY,
@@ -230,9 +232,11 @@ export function buildTreeModel(parsed, resource) {
   const journalNodes = [];
   if (parsed.journalSections?.length) {
     const journalTypeLabels = {
-      summary: "Summary",
-      topLevel: "Top-Level Functions",
-      allFunctions: "All Functions",
+      //summary: "Summary",
+      //topLevel: "Top-Level Functions",
+      topLevel: "JOURNALLED_TIMES_IN_TOP_LEVEL_FUNCTIONS",
+      //allFunctions: "All Functions",
+      allFunctions: "JOURNALLED_TIMES_IN_ALL_FUNCTIONS",
     };
     const sectionNodes = (parsed.journalSections ?? []).map(
       (section, index) => {
@@ -331,7 +335,8 @@ export function buildTreeModel(parsed, resource) {
       }
       return {
         id: `hierarchy:${index}:${startLine}`,
-        label: `Hierarchy Trace #${index + 1}`,
+        //label: `Hierarchy Trace #${index + 1}`,
+        label: `JOURNAL_HIERARCHY_TRACE`,
         description: summaryDescription,
         line: startLine,
         children: rowChildren,
@@ -347,7 +352,8 @@ export function buildTreeModel(parsed, resource) {
   if (journalNodes.length) {
     nodes.push({
       id: "root:journal",
-      label: `Journaled Times (${journalNodes.length})`,
+      //label: `Journaled Times (${journalNodes.length})`,
+      label: `Journals (${journalNodes.length})`,
       children: journalNodes,
       icon: "graph",
       contextValue: NODE_CONTEXT.CATEGORY,

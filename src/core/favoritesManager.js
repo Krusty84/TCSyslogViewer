@@ -3,7 +3,7 @@ import path from "node:path";
 import { TextDecoder, TextEncoder } from "node:util";
 
 import { FavoritesTreeDataProvider } from "../ui/treeProviders.js";
-import { NODE_CONTEXT } from "../constants.js";
+import { NODE_CONTEXT } from "../util/constants.js";
 import { truncate } from "../util/helpers.js";
 
 /**
@@ -15,7 +15,7 @@ export class FavoritesManager {
     this.controller = controller;
     this.context = context;
     this.treeDataProvider = new FavoritesTreeDataProvider();
-    this.treeView = vscode.window.createTreeView("tcSyslogFavorites", {
+    this.treeView = vscode.window.createTreeView("tcSyslogViewerFavorites", {
       treeDataProvider: this.treeDataProvider,
     });
     this.entries = [];
@@ -82,13 +82,13 @@ export class FavoritesManager {
       this.entryMap.clear();
       const isMissing =
         error && typeof error === "object" && error.code === "ENOENT";
-      if (!isMissing) {
-        vscode.window.showWarningMessage(
-          `TC Syslog: unable to read favorites - ${
-            error instanceof Error ? error.message : String(error)
-          }`
-        );
-      }
+      // if (!isMissing) {
+      //   vscode.window.showWarningMessage(
+      //     `TC Syslog Viewer: unable to read favorites - ${
+      //       error instanceof Error ? error.message : String(error)
+      //     }`
+      //   );
+      // }
     }
     this.sortEntries();
     this.refreshTree();
@@ -221,7 +221,7 @@ export class FavoritesManager {
           ? favorite.line
           : favorite.range?.start?.line ?? null,
       command: {
-        command: "tcSyslog.openFavorite",
+        command: "tcSyslogViewer.openFavorite",
         title: "Open Favorite",
         arguments: [favorite.id],
       },

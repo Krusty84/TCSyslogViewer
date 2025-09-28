@@ -1,9 +1,9 @@
 {
   "name": "tc-syslog-viewer",
   "displayName": "TC Syslog Viewer",
-  "description": "Syntax color + Explorer + counters for Siemens Teamcenter syslog files.",
+  "description": "Syntax color + Explorer for Teamcenter (Siemens Digital Industries Software) syslog files.",
   "version": "0.0.1",
-  "publisher": "AlexeySedoykin",
+  "publisher": "Alexey Sedoykin",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -15,265 +15,265 @@
   "main": "./src/extension.js",
   "activationEvents": [
     "onStartupFinished",
-    "onCommand:tcSyslog.refresh",
-    "onCommand:tcSyslog.copyCategory",
-    "onCommand:tcSyslog.copyEntry",
-    "onCommand:tcSyslog.addFavorite",
-    "onCommand:tcSyslog.editFavorite",
-    "onCommand:tcSyslog.removeFavorite",
-    "onCommand:tcSyslog.openFavorite",
-    "onCommand:tcSyslog.closeMentionsSession",
-    "onCommand:tcSyslog.findAllMentionsInEditor",
-    "onView:tcSyslogBasic",
-    "onView:tcSyslogExtra",
-    "onView:tcSyslogFavorites",
+    "onCommand:tcSyslogViewer.refresh",
+    "onCommand:tcSyslogViewer.copyCategory",
+    "onCommand:tcSyslogViewer.copyEntry",
+    "onCommand:tcSyslogViewer.addFavorite",
+    "onCommand:tcSyslogViewer.editFavorite",
+    "onCommand:tcSyslogViewer.removeFavorite",
+    "onCommand:tcSyslogViewer.openFavorite",
+    "onCommand:tcSyslogViewer.closeOccurrencesResult",
+    "onCommand:tcSyslogViewer.findAllOccurrencesOpenInEditor",
+    "onView:tcSyslogViewerBasic",
+    "onView:tcSyslogViewerExtra",
+    "onView:tcSyslogViewerFavorites",
     "workspaceContains:**/*.syslog",
     "onLanguage:teamcenter-syslog"
   ],
   "contributes": {
     "commands": [
       {
-        "command": "tcSyslog.refresh",
-        "title": "TC Syslog: Refresh"
+        "command": "tcSyslogViewer.refresh",
+        "title": "TC Syslog Viewer: Refresh Sylog File"
       },
       {
-        "command": "tcSyslog.copyCategory",
-        "title": "TC Syslog: Copy Category"
+        "command": "tcSyslogViewer.copyCategory",
+        "title": "TC Syslog Viewer: Open Category"
       },
       {
-        "command": "tcSyslog.copyEntry",
-        "title": "TC Syslog: Copy Entry"
+        "command": "tcSyslogViewer.copyEntry",
+        "title": "TC Syslog: Open Entry"
       },
       {
-        "command": "tcSyslog.addFavorite",
-        "title": "TC Syslog: Add to Favorites"
+        "command": "tcSyslogViewer.addFavorite",
+        "title": "TC Syslog Viewer: Add to Favorites"
       },
       {
-        "command": "tcSyslog.editFavorite",
-        "title": "TC Syslog: Edit Favorite Comment"
+        "command": "tcSyslogViewer.editFavorite",
+        "title": "TC Syslog Viewer: Edit Favorite Comment"
       },
       {
-        "command": "tcSyslog.removeFavorite",
-        "title": "TC Syslog: Remove Favorite"
+        "command": "tcSyslogViewer.removeFavorite",
+        "title": "TC Syslog Viewer: Remove Favorite"
       },
       {
-        "command": "tcSyslog.openFavorite",
-        "title": "TC Syslog: Open Favorite Entry"
+        "command": "tcSyslogViewer.openFavorite",
+        "title": "TC Syslog Viewer: Open Favorite Entry"
       },
       {
-        "command": "tcSyslog.closeMentionsSession",
-        "title": "TC Syslog: Close Mentions Result"
+        "command": "tcSyslogViewer.closeOccurrencesResult",
+        "title": "TC Syslog Viewer: Close Occurrences Result"
       },
       {
-        "command": "tcSyslog.findAllMentions",
-        "title": "TC Syslog: Find All Mentions"
+        "command": "tcSyslogViewer.findAllOccurrences",
+        "title": "TC Syslog Viewer: Find All Occurrences"
       },
       {
-        "command": "tcSyslog.findAllMentionsInEditor",
-        "title": "TC Syslog: Find Mentions in Editor"
+        "command": "tcSyslogViewer.findAllOccurrencesOpenInEditor",
+        "title": "TC Syslog Viewer: Find All Occurrences Open in Editor"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "tcSyslogSidebar",
-          "title": "Teamcenter Syslog",
+          "id": "tcSyslogViewerSidebar",
+          "title": "Teamcenter Syslog Viewer",
           "icon": "media/icon.svg"
         }
       ],
       "panel": [
         {
-          "id": "tcSyslogPanel",
-          "title": "Teamcenter Syslog",
+          "id": "tcSyslogViewerPanel",
+          "title": "Teamcenter Syslog Viewer",
           "icon": "media/icon.svg"
         }
       ]
     },
     "views": {
-      "tcSyslogSidebar": [
+      "tcSyslogViewerSidebar": [
         {
-          "id": "tcSyslogBasic",
+          "id": "tcSyslogViewerBasic",
           "name": "Basic Content"
         },
         {
-          "id": "tcSyslogExtra",
+          "id": "tcSyslogViewerExtra",
           "name": "Extra Content"
         },
         {
-          "id": "tcSyslogFavorites",
+          "id": "tcSyslogViewerFavorites",
           "name": "Favorites"
         }
       ],
-      "tcSyslogPanel": [
+      "tcSyslogViewerPanel": [
         {
-          "id": "tcSyslogMentions",
-          "name": "Mentions"
+          "id": "tcSyslogViewerOccurrences",
+          "name": "Occurrences"
         }
       ]
     },
     "menus": {
       "commandPalette": [
         {
-          "command": "tcSyslog.refresh",
+          "command": "tcSyslogViewer.refresh",
           "when": "true"
         },
         {
-          "command": "tcSyslog.copyCategory",
+          "command": "tcSyslogViewer.copyCategory",
           "when": "true"
         },
         {
-          "command": "tcSyslog.copyEntry",
+          "command": "tcSyslogViewer.copyEntry",
           "when": "true"
         },
         {
-          "command": "tcSyslog.addFavorite",
+          "command": "tcSyslogViewer.addFavorite",
           "when": "true"
         },
         {
-          "command": "tcSyslog.editFavorite",
+          "command": "tcSyslogViewer.editFavorite",
           "when": "false"
         },
         {
-          "command": "tcSyslog.removeFavorite",
+          "command": "tcSyslogViewer.removeFavorite",
           "when": "false"
         },
         {
-          "command": "tcSyslog.findAllMentions",
+          "command": "tcSyslogViewer.findAllOccurrences",
           "when": "true"
         },
         {
-          "command": "tcSyslog.findAllMentionsInEditor",
+          "command": "tcSyslogViewer.findAllOccurrencesOpenInEditor",
           "when": "true"
         },
         {
-          "command": "tcSyslog.closeMentionsSession",
+          "command": "tcSyslogViewer.closeOccurrencesResult",
           "when": "false"
         }
       ],
       "view/item/context": [
         {
-          "command": "tcSyslog.copyCategory",
-          "when": "view == tcSyslogBasic && viewItem == syslogCategory"
+          "command": "tcSyslogViewer.copyCategory",
+          "when": "view == tcSyslogViewerBasic && viewItem == syslogCategory"
         },
         {
-          "command": "tcSyslog.copyCategory",
-          "when": "view == tcSyslogExtra && viewItem == syslogCategory"
+          "command": "tcSyslogViewer.copyCategory",
+          "when": "view == tcSyslogViewerExtra && viewItem == syslogCategory"
         },
         {
-          "command": "tcSyslog.copyCategory",
-          "when": "view == tcSyslogBasic && viewItem == syslogGroup"
+          "command": "tcSyslogViewer.copyCategory",
+          "when": "view == tcSyslogViewerBasic && viewItem == syslogGroup"
         },
         {
-          "command": "tcSyslog.copyCategory",
-          "when": "view == tcSyslogExtra && viewItem == syslogGroup"
+          "command": "tcSyslogViewer.copyCategory",
+          "when": "view == tcSyslogViewerExtra && viewItem == syslogGroup"
         },
         {
-          "command": "tcSyslog.closeMentionsSession",
-          "when": "view == tcSyslogMentions && viewItem == syslogMentionsSession"
+          "command": "tcSyslogViewer.closeOccurrencesResult",
+          "when": "view == tcSyslogViewerOccurrences && viewItem == syslogOccurrencesResult"
         },
         {
-          "command": "tcSyslog.copyEntry",
-          "when": "view == tcSyslogBasic && viewItem == syslogEntry"
+          "command": "tcSyslogViewer.copyEntry",
+          "when": "view == tcSyslogViewerBasic && viewItem == syslogEntry"
         },
         {
-          "command": "tcSyslog.copyEntry",
-          "when": "view == tcSyslogExtra && viewItem == syslogEntry"
+          "command": "tcSyslogViewer.copyEntry",
+          "when": "view == tcSyslogViewerExtra && viewItem == syslogEntry"
         },
         {
-          "command": "tcSyslog.addFavorite",
-          "when": "view == tcSyslogBasic && viewItem == syslogEntry"
+          "command": "tcSyslogViewer.addFavorite",
+          "when": "view == tcSyslogViewerBasic && viewItem == syslogEntry"
         },
         {
-          "command": "tcSyslog.addFavorite",
-          "when": "view == tcSyslogExtra && viewItem == syslogEntry"
+          "command": "tcSyslogViewer.addFavorite",
+          "when": "view == tcSyslogViewerExtra && viewItem == syslogEntry"
         },
         {
-          "command": "tcSyslog.editFavorite",
-          "when": "view == tcSyslogFavorites && viewItem == syslogFavorite"
+          "command": "tcSyslogViewer.editFavorite",
+          "when": "view == tcSyslogViewerFavorites && viewItem == syslogFavorite"
         },
         {
-          "command": "tcSyslog.removeFavorite",
-          "when": "view == tcSyslogFavorites && viewItem == syslogFavorite"
+          "command": "tcSyslogViewer.removeFavorite",
+          "when": "view == tcSyslogViewerFavorites && viewItem == syslogFavorite"
         }
       ],
       "editor/context": [
         {
-          "command": "tcSyslog.addFavorite",
+          "command": "tcSyslogViewer.addFavorite",
           "when": "resourceLangId == teamcenter-syslog"
         },
         {
-          "command": "tcSyslog.findAllMentions",
+          "command": "tcSyslogViewer.findAllOccurrences",
           "when": "resourceLangId == teamcenter-syslog"
         },
         {
-          "command": "tcSyslog.findAllMentionsInEditor",
+          "command": "tcSyslogViewer.findAllOccurrencesOpenInEditor",
           "when": "resourceLangId == teamcenter-syslog"
         }
       ]
     },
     "configuration": {
       "properties": {
-        "tcSyslog.colors.level.WARNING.fg": {
+        "tcSyslogViewer.colors.level.WARNING.fg": {
           "type": "color-hex",
           "default": "#b27000",
           "description": "Log Level WARNING foreground color"
         },
-        "tcSyslog.colors.level.WARNING.bg": {
+        "tcSyslogViewer.colors.level.WARNING.bg": {
           "type": "color-hex",
           "default": "#b2700022",
           "description": "Log Level WARNING background color"
         },
-        "tcSyslog.colors.level.DEBUG.fg": {
+        "tcSyslogViewer.colors.level.DEBUG.fg": {
           "type": "color-hex",
           "default": "#5c6770",
           "description": "Log Level DEBUG foreground color"
         },
-        "tcSyslog.colors.level.DEBUG.bg": {
+        "tcSyslogViewer.colors.level.DEBUG.bg": {
           "type": "color--hex",
           "default": "#5c677022",
           "description": "Log Level DEBUG background color"
         },
-        "tcSyslog.colors.level.FATAL.fg": {
+        "tcSyslogViewer.colors.level.FATAL.fg": {
           "type": "color-hex",
           "default": "#c21850",
           "description": "Log Level FATAL foreground color"
         },
-        "tcSyslog.colors.level.FATAL.bg": {
+        "tcSyslogViewer.colors.level.FATAL.bg": {
           "type": "color-hex",
           "default": "#c2185022",
           "description": "Log Level FATAL background color"
         },
-        "tcSyslog.colors.timestamp.fg": {
+        "tcSyslogViewer.colors.timestamp.fg": {
           "type": "color-hex",
           "default": "#7f868e",
           "description": "Timestamp foreground color"
         },
-        "tcSyslog.colors.sql.background": {
+        "tcSyslogViewer.colors.sql.background": {
           "type": "color-hex",
           "default": "#f1e8d1cc",
           "description": "SQL dump background color"
         },
-        "tcSyslog.colors.sql.inline.background": {
+        "tcSyslogViewer.colors.sql.inline.background": {
           "type": "color-hex",
           "default": "#f1e8d1cc",
           "description": "Inline SQL background color"
         },
-        "tcSyslog.colors.journal.background": {
+        "tcSyslogViewer.colors.journal.background": {
           "type": "color-hex",
           "default": "#dceeffcc",
           "description": "Journal sections background color"
         },
-        "tcSyslog.colors.journal.hierarchy.background": {
+        "tcSyslogViewer.colors.journal.hierarchy.background": {
           "type": "color-hex",
           "default": "#dceeff99",
           "description": "Hierarchy trace background color"
         },
-        "tcSyslog.colors.access.background": {
+        "tcSyslogViewer.colors.access.background": {
           "type": "color-hex",
           "default": "#c4e4ffcc",
           "description": "Access privilege check background color"
         },
-        "tcSyslog.colors.workflow.background": {
+        "tcSyslogViewer.colors.workflow.background": {
           "type": "color-hex",
           "default": "#d0e8ffcc",
           "description": "Workflow handler flow background color"
@@ -302,7 +302,7 @@
     ]
   },
   "scripts": {
-    "compile:antlr": "antlr -Dlanguage=JavaScript -visitor -Xexact-output-dir -o src/parse/antlr/generated src/parse/antlr/TeamcenterLog.g4",
+    "compile:antlr": "antlr -Dlanguage=JavaScript -visitor -Xexact-output-dir -o src/parse/antlr/generated src/parse/antlr/tcServerSyslogGrammar.g4",
     "watch": "node --watch src/extension.js"
   },
   "dependencies": {
