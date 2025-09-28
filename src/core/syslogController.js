@@ -16,7 +16,7 @@ import {
 import {
   OccurrencesTreeDataProvider,
   SyslogTreeDataProvider,
-} from "../ui/treeProviders.js";
+} from "../ui/general/treeProviders.js";
 import { FavoritesManager } from "./favoritesManager.js";
 import { buildTreeModel } from "./treeModel.js";
 
@@ -25,18 +25,38 @@ import { buildTreeModel } from "./treeModel.js";
  * User-facing commands compose on top of this class so business logic remains isolated.
  */
 export class SyslogController {
-  constructor(context) {
+  constructor(context, sidebar, panel) {
     this.context = context;
-    this.treeDataProvider = new SyslogTreeDataProvider();
-    this.treeView = vscode.window.createTreeView("tcSyslogViewerBasic", {
-      treeDataProvider: this.treeDataProvider,
-    });
-    this.treeView.message = "Open a .syslog file to see parsed categories.";
-    this.extraTreeDataProvider = new SyslogTreeDataProvider();
-    this.extraTreeView = vscode.window.createTreeView("tcSyslogViewerExtra", {
-      treeDataProvider: this.extraTreeDataProvider,
-    });
-    this.extraTreeView.message = "Open a .syslog file to see extra categories.";
+    const basicView = sidebar?.basic;
+    if (basicView) {
+      this.treeDataProvider = basicView.treeDataProvider;
+      this.treeView = basicView.treeView;
+    } else {
+      this.treeDataProvider = new SyslogTreeDataProvider();
+      this.treeView = vscode.window.createTreeView("tcSyslogViewerBasic", {
+        treeDataProvider: this.treeDataProvider,
+      });
+      this.context.subscriptions.push(this.treeView);
+    }
+    if (!this.treeView.message) {
+      this.treeView.message = "Open a .syslog file to see parsed categories.";
+    }
+
+    const extraView = sidebar?.extra;
+    if (extraView) {
+      this.extraTreeDataProvider = extraView.treeDataProvider;
+      this.extraTreeView = extraView.treeView;
+    } else {
+      this.extraTreeDataProvider = new SyslogTreeDataProvider();
+      this.extraTreeView = vscode.window.createTreeView("tcSyslogViewerExtra", {
+        treeDataProvider: this.extraTreeDataProvider,
+      });
+      this.context.subscriptions.push(this.extraTreeView);
+    }
+    if (!this.extraTreeView.message) {
+      this.extraTreeView.message =
+        "Open a .syslog file to see extra categories.";
+    }
     this.currentUri = null;
     this.refreshTimer = undefined;
     this.pendingDocument = undefined;
@@ -56,23 +76,34 @@ export class SyslogController {
     this.workflowHandlerDecorationType = undefined;
     this.baseFontDecorationType = undefined;
     this.latestParsed = null;
-    this.favoritesManager = new FavoritesManager(this, context);
-    this.occurrencesDataProvider = new OccurrencesTreeDataProvider();
-    this.occurrencesView = vscode.window.createTreeView(
-      "tcSyslogViewerOccurrences",
-      {
-        treeDataProvider: this.occurrencesDataProvider,
-      }
+    this.favoritesManager = new FavoritesManager(
+      this,
+      context,
+      sidebar?.favorites
     );
-    this.occurrencesView.message =
-      "Run Find All Occurrences to populate results.";
+
+    const occurrencesView = panel?.occurrences;
+    if (occurrencesView) {
+      this.occurrencesDataProvider = occurrencesView.treeDataProvider;
+      this.occurrencesView = occurrencesView.treeView;
+    } else {
+      this.occurrencesDataProvider = new OccurrencesTreeDataProvider();
+      this.occurrencesView = vscode.window.createTreeView(
+        "tcSyslogViewerOccurrences",
+        {
+          treeDataProvider: this.occurrencesDataProvider,
+        }
+      );
+      this.context.subscriptions.push(this.occurrencesView);
+    }
+    if (this.occurrencesView && !this.occurrencesView.message) {
+      this.occurrencesView.message =
+        "Run Find All Occurrences to populate results.";
+    }
     this.previewDocuments = new Set();
-    this.context.subscriptions.push(this.treeView);
-    this.context.subscriptions.push(this.extraTreeView);
     this.context.subscriptions.push({
       dispose: () => this.disposeDecorationTypes(),
     });
-    this.context.subscriptions.push(this.occurrencesView);
 
     this.reloadDecorationTypes();
 
@@ -1232,7 +1263,7 @@ export class SyslogController {
     }
 
     await vscode.commands.executeCommand(
-      "workbench.view.extension.tcSyslogViewerPanel"
+      "workbench.view.extension.tcSyslogViewerCenterBottomPanel"
     );
     if (this.occurrencesView) {
       try {

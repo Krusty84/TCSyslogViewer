@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import path from "node:path";
 import { TextDecoder, TextEncoder } from "node:util";
 
-import { FavoritesTreeDataProvider } from "../ui/treeProviders.js";
+import { FavoritesTreeDataProvider } from "../ui/general/treeProviders.js";
 import { NODE_CONTEXT } from "../util/constants.js";
 import { truncate } from "../util/helpers.js";
 
@@ -11,13 +11,19 @@ import { truncate } from "../util/helpers.js";
  * provider instance and exposes CRUD helpers consumed by the controller and command layer.
  */
 export class FavoritesManager {
-  constructor(controller, context) {
+  constructor(controller, context, favoritesView) {
     this.controller = controller;
     this.context = context;
-    this.treeDataProvider = new FavoritesTreeDataProvider();
-    this.treeView = vscode.window.createTreeView("tcSyslogViewerFavorites", {
-      treeDataProvider: this.treeDataProvider,
-    });
+    if (favoritesView) {
+      this.treeDataProvider = favoritesView.treeDataProvider;
+      this.treeView = favoritesView.treeView;
+    } else {
+      this.treeDataProvider = new FavoritesTreeDataProvider();
+      this.treeView = vscode.window.createTreeView("tcSyslogViewerFavorites", {
+        treeDataProvider: this.treeDataProvider,
+      });
+      context.subscriptions.push(this.treeView);
+    }
     this.entries = [];
     this.entryMap = new Map();
     this.currentResource = null;
@@ -26,7 +32,6 @@ export class FavoritesManager {
     this.favoritesUri = null;
     this.decoder = new TextDecoder("utf8");
     this.encoder = new TextEncoder();
-    context.subscriptions.push(this.treeView);
     this.clear();
   }
 

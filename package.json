@@ -76,21 +76,21 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "tcSyslogViewerSidebar",
+          "id": "tcSyslogViewerRightSidebar",
           "title": "Teamcenter Syslog Viewer",
           "icon": "media/icon.svg"
         }
       ],
       "panel": [
         {
-          "id": "tcSyslogViewerPanel",
+          "id": "tcSyslogViewerCenterBottomPanel",
           "title": "Teamcenter Syslog Viewer",
           "icon": "media/icon.svg"
         }
       ]
     },
     "views": {
-      "tcSyslogViewerSidebar": [
+      "tcSyslogViewerRightSidebar": [
         {
           "id": "tcSyslogViewerBasic",
           "name": "Basic Content"
@@ -104,7 +104,7 @@
           "name": "Favorites"
         }
       ],
-      "tcSyslogViewerPanel": [
+      "tcSyslogViewerCenterBottomPanel": [
         {
           "id": "tcSyslogViewerOccurrences",
           "name": "Occurrences"

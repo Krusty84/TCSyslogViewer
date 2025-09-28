@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { NODE_CONTEXT } from "../util/constants.js";
-import { truncate } from "../util/helpers.js";
+import { NODE_CONTEXT } from "../../util/constants.js";
+import { truncate } from "../../util/helpers.js";
 
 /**
  * Tree data providers power the primary explorer views.
