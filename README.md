@@ -1,4 +1,4 @@
-# TCSyslogViewer
+# TC Syslog Viewer
 
 ## 🚀 What is this?
 
