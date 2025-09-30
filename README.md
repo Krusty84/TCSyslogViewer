@@ -5,9 +5,9 @@
 **TCSyslogViewer** is a Visual Studio Code extension that makes working with Siemens Teamcenter `.syslog` files. 
 It parses large logs, organises their content into rich explorer views, and provides tooling to jump to interesting sections, save favourites, and analyse recurring patterns.
 
-<img width="1920" height="1124" alt="image" src="https://github.com/user-attachments/assets/b4190216-9db9-491d-a989-994f7eb39a0b" />
+![image](https://github.com/user-attachments/assets/b4190216-9db9-491d-a989-994f7eb39a0b?raw=true)
 
-<img width="1208" height="574" alt="image" src="https://github.com/user-attachments/assets/6a1f8033-af79-4fc6-afe7-41fd816075c2" />
+![image](https://github.com/user-attachments/assets/6a1f8033-af79-4fc6-afe7-41fd816075c2?raw=true)
 
 --
 
@@ -41,8 +41,8 @@ Developers, QA specialists, pre-sales specialists, etc., working with Teamcenter
 
 Context menus in the explorer and editor provide shortcuts for the same actions when a `.syslog` file is active:
 
-<img width="495" height="356" alt="image" src="https://github.com/user-attachments/assets/949bb6c1-5b0d-4b6d-ba1a-f30b27d3ad5b" />
+![image](https://github.com/user-attachments/assets/949bb6c1-5b0d-4b6d-ba1a-f30b27d3ad5b?raw=true)
 
-<img width="496" height="376" alt="image" src="https://github.com/user-attachments/assets/64bafcab-706f-46d6-a4fd-06b70a100299" />
+![image](https://github.com/user-attachments/assets/64bafcab-706f-46d6-a4fd-06b70a100299?raw=true)
 
-<img width="1295" height="586" alt="image" src="https://github.com/user-attachments/assets/b5d1834e-6872-44b7-ba22-b535cd412ea3" />
+![image](https://github.com/user-attachments/assets/b5d1834e-6872-44b7-ba22-b535cd412ea3?raw=true)
