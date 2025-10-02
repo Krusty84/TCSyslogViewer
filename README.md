@@ -16,7 +16,7 @@ It parses large logs, organises their content into rich explorer views, and prov
 - **Tcserver syslog parsing** – Automatically recognises `.syslog` files and builds structured views of key sections, log levels, SQL dumps, journal data.
 - **Explorer views** – The activity-bar container exposes three tree views:
   - **Basic Content**: Overview and primary category hierarchy for the active log.
-  - **Extra Content**: Additional parsed groups (SQL, Journals, Security check). Special modes for Teamcenter sever is need!
+  - **Extra Content**: Additional parsed groups (SQL, Journals, Security check). Special modes for Teamcenter server is need!
   - **Favorites**: Parts of the system log that interest you (stored in the file: original file name syslog`.favorite`)
 
 ## 🧑‍💼 Who is it for?
