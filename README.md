@@ -1,6 +1,6 @@
 # TC Syslog Viewer
 
-## 🚀 What is this?
+## What is this?
 
 **TCSyslogViewer** is a Visual Studio Code extension that makes working with Siemens Teamcenter `.syslog` files. 
 It parses large logs, organises their content into rich explorer views, and provides tooling to jump to interesting sections, save favourites, and analyse recurring patterns.
@@ -11,7 +11,7 @@ It parses large logs, organises their content into rich explorer views, and prov
 
 --
 
-## 🎯 Features
+## Features
 
 - **Tcserver syslog parsing** – Automatically recognises `.syslog` files and builds structured views of key sections, log levels, SQL dumps, journal data.
 - **Explorer views** – The activity-bar container exposes three tree views:
@@ -19,11 +19,11 @@ It parses large logs, organises their content into rich explorer views, and prov
   - **Extra Content**: Additional parsed groups (SQL, Journals, Security check). Special modes for Teamcenter server is need!
   - **Favorites**: Parts of the system log that interest you (stored in the file: original file name syslog`.favorite`)
 
-## 🧑‍💼 Who is it for?
+## Who is it for?
 
 Developers, QA specialists, pre-sales specialists, etc., working with Teamcenter through the back door :)
 
-## 💊 Commands
+## Commands
 
 | Command | Description |
 | --- | --- |
