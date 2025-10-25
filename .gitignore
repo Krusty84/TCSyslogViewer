@@ -1,1 +1,5 @@
 tc-syslog-viewer-1.0.0.vsix
+mcp_reference/config.json
+mcp_reference/llm-client.js
+mcp_reference/mcp-server.js
+mcp_reference/tools.js

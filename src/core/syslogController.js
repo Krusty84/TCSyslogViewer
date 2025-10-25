@@ -18,6 +18,7 @@ import {
   SyslogTreeDataProvider,
 } from "../ui/general/treeProviders.js";
 import { FavoritesManager } from "./favoritesManager.js";
+import { AiChatManager } from "./aiChatManager.js";
 import { buildTreeModel } from "./treeModel.js";
 
 /**
@@ -100,6 +101,7 @@ export class SyslogController {
       this.occurrencesView.message =
         "Run Find All Occurrences to populate results.";
     }
+    this.aiChatManager = new AiChatManager(context);
     this.previewDocuments = new Set();
     this.context.subscriptions.push({
       dispose: () => this.disposeDecorationTypes(),
@@ -875,6 +877,7 @@ export class SyslogController {
       this.occurrencesView.message =
         "Run Find All Occurrences to populate results.";
     }
+    this.aiChatManager?.resetConversation();
   }
 
   refreshActive() {
@@ -1323,6 +1326,79 @@ export class SyslogController {
     }
 
     await this.openOccurrencesDocument(document, needle, matches, truncated);
+  }
+
+  async chatWithAi() {
+    const question = await vscode.window.showInputBox({
+      prompt: "Ask the AI assistant",
+      placeHolder: "e.g. Why are there so many failed authentications?",
+      ignoreFocusOut: true,
+    });
+    if (!question) {
+      return;
+    }
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Window,
+        title: "TC Syslog AI",
+      },
+      async () => {
+        await this.sendAiChatMessage(question);
+      }
+    );
+  }
+
+  async sendAiChatMessage(question) {
+    if (!this.aiChatManager) {
+      vscode.window.showWarningMessage(
+        "TC Syslog AI is not available in this workspace."
+      );
+      return null;
+    }
+    const document = this.currentUri
+      ? await vscode.workspace.openTextDocument(this.currentUri)
+      : vscode.window.activeTextEditor?.document;
+    if (!document || !isSyslogDocument(document)) {
+      vscode.window.showInformationMessage(
+        "TC Syslog AI: open a Teamcenter syslog file first."
+      );
+      return null;
+    }
+    const editor = vscode.window.activeTextEditor;
+    const selectionText =
+      editor &&
+      editor.document?.uri.toString() === document.uri.toString() &&
+      !editor.selection.isEmpty
+        ? document.getText(editor.selection)
+        : undefined;
+    try {
+      const result = await this.aiChatManager.sendMessage(document, {
+        selectionText,
+        userMessage: question,
+      });
+      return result;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : String(error ?? "Unknown error");
+      vscode.window.showErrorMessage(`TC Syslog AI: ${message}`);
+      return null;
+    }
+  }
+
+  getAiChatMessages() {
+    return this.aiChatManager?.getMessages() ?? [];
+  }
+
+  onAiChatChanged(listener) {
+    return this.aiChatManager?.onDidChange(listener);
+  }
+
+  getAiChatDisplayName() {
+    return this.aiChatManager?.getDisplayName() ?? "AI";
+  }
+
+  getAiChatAgentInfo() {
+    return this.aiChatManager?.getAgentInfo?.() ?? null;
   }
 
   prepareOccurrencesSearchContext() {

@@ -38,6 +38,8 @@
     "onCommand:tcSyslogViewer.editFavorite",
     "onCommand:tcSyslogViewer.removeFavorite",
     "onCommand:tcSyslogViewer.openFavorite",
+    "onCommand:tcSyslogViewer.openSyslogFile",
+    "onCommand:tcSyslogViewer.chatWithAi",
     "onCommand:tcSyslogViewer.closeOccurrencesResult",
     "onCommand:tcSyslogViewer.findAllOccurrencesOpenInEditor",
     "onView:tcSyslogViewerBasic",
@@ -75,6 +77,14 @@
       {
         "command": "tcSyslogViewer.openFavorite",
         "title": "TC Syslog Viewer: Open Favorite Entry"
+      },
+      {
+        "command": "tcSyslogViewer.openSyslogFile",
+        "title": "TC Syslog Viewer: Open Syslog File"
+      },
+      {
+        "command": "tcSyslogViewer.chatWithAi",
+        "title": "TC Syslog Viewer: Chat w/ AI"
       },
       {
         "command": "tcSyslogViewer.closeOccurrencesResult",
@@ -124,6 +134,11 @@
         {
           "id": "tcSyslogViewerOccurrences",
           "name": "Occurrences"
+        },
+        {
+          "id": "tcSyslogViewerAiInsights",
+          "name": "AI Chat",
+          "type": "webview"
         }
       ]
     },
@@ -144,6 +159,14 @@
         {
           "command": "tcSyslogViewer.addFavorite",
           "when": "true"
+        },
+        {
+          "command": "tcSyslogViewer.openSyslogFile",
+          "when": "true"
+        },
+        {
+          "command": "tcSyslogViewer.chatWithAi",
+          "when": "resourceLangId == teamcenter-syslog"
         },
         {
           "command": "tcSyslogViewer.editFavorite",
@@ -224,6 +247,10 @@
         {
           "command": "tcSyslogViewer.findAllOccurrencesOpenInEditor",
           "when": "resourceLangId == teamcenter-syslog"
+        },
+        {
+          "command": "tcSyslogViewer.chatWithAi",
+          "when": "resourceLangId == teamcenter-syslog"
         }
       ]
     },
@@ -293,6 +320,32 @@
           "type": "color-hex",
           "default": "#d0e8ffcc",
           "description": "Workflow handler flow background color"
+        },
+        "tcSyslogViewer.ai.provider": {
+          "type": "string",
+          "enum": ["deepseek", "openai", "ollama"],
+          "default": "deepseek",
+          "description": "LLM provider used by the AI analysis view (mirrors config.json provider)."
+        },
+        "tcSyslogViewer.ai.model": {
+          "type": "string",
+          "default": "deepseek-chat",
+          "description": "Model identifier passed to the configured provider."
+        },
+        "tcSyslogViewer.ai.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for the selected provider (stored in settings, consider using Secret Storage)."
+        },
+        "tcSyslogViewer.ai.server.authToken": {
+          "type": "string",
+          "default": "",
+          "description": "Optional auth token mirroring MCP server authentication (used when proxying requests)."
+        },
+        "tcSyslogViewer.ai.workspace": {
+          "type": "string",
+          "default": "${workspaceFolder}",
+          "description": "Logical workspace root used by the AI tools (mirrors WORKING_DIR)."
         }
       }
     },

@@ -13,5 +13,9 @@ export function centerBottomPanelCommands(controller) {
       "tcSyslogViewer.findAllOccurrencesOpenInEditor",
       () => controller.findAllOccurrencesOpenInEditor()
     ),
+    vscode.commands.registerCommand(
+      "tcSyslogViewer.chatWithAi",
+      () => controller.chatWithAi()
+    ),
   ];
 }
