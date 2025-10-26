@@ -110,51 +110,77 @@ class AiChatWebviewProvider {
         background: var(--vscode-sideBar-background);
         box-sizing: border-box;
       }
+      .input-container {
+        position: relative;
+        width: 100%;
+      }
       textarea {
         width: 100%;
-        min-height: 90px;
-        resize: vertical;
+        min-height: 60px;
+        max-height: 120px;
+        resize: none;
         font-family: var(--vscode-editor-font-family);
         border: 1px solid var(--vscode-editorWidget-border);
         background: var(--vscode-editorWidget-background);
         color: var(--vscode-editor-foreground);
-        padding: 0.4rem;
+        padding: 0.4rem 0.4rem 2.5rem 0.4rem;
         border-radius: 4px;
         box-sizing: border-box;
       }
-      .ask-row {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        flex-wrap: wrap;
+      textarea.sending::placeholder {
+        color: var(--vscode-descriptionForeground);
+        opacity: 0.8;
+        font-style: italic;
       }
-      button {
+      .ask-button {
+        position: absolute;
+        bottom: 0.4rem;
+        right: 0.4rem;
         padding: 0.4rem 1rem;
         background: var(--vscode-button-background);
         color: var(--vscode-button-foreground);
         border: none;
         border-radius: 4px;
         cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: normal;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
       }
-      button:disabled {
-        opacity: 0.5;
-        cursor: default;
+      .ask-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+      .ask-button.working {
+        background: var(--vscode-button-secondaryBackground);
       }
       .llm-info {
         font-size: 0.85rem;
         opacity: 0.8;
+        margin-left: 0.6rem;
       }
       .responses {
         border: 1px solid var(--vscode-editorWidget-border);
         background: var(--vscode-editorWidget-background);
         padding: 0.6rem;
         border-radius: 4px;
-        flex: 1;
+        flex: 2;
         overflow-y: auto;
         min-height: 0;
         display: flex;
         flex-direction: column;
-        gap: 0.6rem;
+        gap: 1rem;
+      }
+      .message-pair {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        padding-bottom: 0.6rem;
+        border-bottom: 1px solid var(--vscode-editorWidget-border);
+      }
+      .message-pair:last-child {
+        border-bottom: none;
       }
       .entry-header {
         font-weight: bold;
@@ -172,20 +198,24 @@ class AiChatWebviewProvider {
         align-items: center;
         gap: 0.4rem;
       }
-      .spinner, .button-spinner {
-        width: 14px;
-        height: 14px;
+      .spinner {
+        width: 16px;
+        height: 16px;
         border-radius: 50%;
-        border: 2px solid var(--vscode-editorWidget-border);
+        border: 3px solid var(--vscode-editorWidget-border);
         border-top-color: var(--vscode-button-background);
         animation: spin 0.8s linear infinite;
       }
       .button-spinner {
-        width: 12px;
-        height: 12px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 3px solid var(--vscode-button-foreground);
+        border-top-color: var(--vscode-button-background);
+        animation: spin 0.8s linear infinite;
       }
       .hidden {
-        display: none;
+        display: none !important;
       }
       @keyframes spin {
         from { transform: rotate(0deg); }
@@ -195,20 +225,24 @@ class AiChatWebviewProvider {
   </head>
   <body>
     <h2>Ask LLM anything</h2>
+    <div class="responses" id="responses">No messages yet. Ask something to begin.</div>
     <form id="ask-form">
-      <textarea id="question" placeholder="Type your question about the open syslog..."></textarea>
+      <div class="input-container">
+        <textarea id="question" placeholder="Type your question about the open syslog..."></textarea>
+        <button type="submit" id="ask-button" class="ask-button">
+          <span id="button-text">Ask</span>
+          <span id="button-spinner" class="button-spinner hidden"></span>
+        </button>
+      </div>
       <div class="ask-row">
-        <button type="submit" id="ask-button">Ask</button>
-        <span id="button-spinner" class="button-spinner hidden"></span>
         <span id="llm-info" class="llm-info">LLM: ?, Model: ?</span>
       </div>
     </form>
-    <div class="responses" id="responses">No messages yet. Ask something to begin.</div>
     <div class="status">
       <span id="status-spinner" class="spinner hidden"></span>
       <span id="status-text"></span>
     </div>
-    <script nonce="{{nonce}}">
+    <script nonce="${nonce}">
       (function() {
         const vscode = acquireVsCodeApi();
         const form = document.getElementById('ask-form');
@@ -217,8 +251,11 @@ class AiChatWebviewProvider {
         const statusTextEl = document.getElementById('status-text');
         const statusSpinner = document.getElementById('status-spinner');
         const button = document.getElementById('ask-button');
+        const buttonText = document.getElementById('button-text');
         const buttonSpinner = document.getElementById('button-spinner');
         const llmInfoEl = document.getElementById('llm-info');
+        
+        let isProcessing = false;
 
         form.addEventListener('submit', (event) => {
           event.preventDefault();
@@ -227,6 +264,11 @@ class AiChatWebviewProvider {
             setStatus('Please enter a question.', false);
             return;
           }
+          if (isProcessing) {
+            setStatus('Please wait, processing...', false);
+            return;
+          }
+          isProcessing = true;
           setWorking(true);
           setStatus('Sending...', true);
           vscode.postMessage({ type: 'ask', text: value });
@@ -235,28 +277,40 @@ class AiChatWebviewProvider {
         window.addEventListener('message', (event) => {
           const payload = event.data || {};
           if (payload.type === 'history') {
-            updateResponses(payload.messages || [], payload.displayName || 'AI');
-            if (payload.llmInfo) {
-              llmInfoEl.textContent = formatLlmInfo(payload.llmInfo);
+            if (payload.messages && payload.messages.length > 0) {
+              updateResponses(payload.messages);
+              if (payload.llmInfo) {
+                llmInfoEl.textContent = formatLlmInfo(payload.llmInfo);
+              }
+              questionInput.value = '';
             }
-            questionInput.value = '';
-            setWorking(false);
-            setStatus('', false);
           } else if (payload.type === 'notification') {
-            setStatus(payload.message || '', false);
-            setWorking(false);
+            setStatus(payload.message || 'Notification received', false);
           } else if (payload.type === 'status') {
             const working = payload.message === 'Working...' || payload.message === 'Sending...';
             setStatus(payload.message || '', working);
-            setWorking(working);
+            if (payload.message === 'Done') {
+              isProcessing = false;
+              setWorking(false);
+              setStatus('', false);
+            }
           }
         });
 
         function setWorking(value) {
           button.disabled = value;
           if (value) {
+            button.classList.add('working');
+            buttonText.textContent = 'Ask';
+            questionInput.value = '';
+            questionInput.placeholder = 'Sending...';
+            questionInput.classList.add('sending');
             buttonSpinner.classList.remove('hidden');
           } else {
+            button.classList.remove('working');
+            buttonText.textContent = 'Ask';
+            questionInput.placeholder = 'Type your question about the open syslog...';
+            questionInput.classList.remove('sending');
             buttonSpinner.classList.add('hidden');
           }
         }
@@ -270,29 +324,69 @@ class AiChatWebviewProvider {
           }
         }
 
-        function updateResponses(messages, displayName) {
+        function updateResponses(messages) {
           if (!messages.length) {
-            responsesEl.textContent = 'No messages yet. Ask something to begin.';
+            responsesEl.innerHTML = '';
+            const placeholder = document.createElement('div');
+            placeholder.textContent = 'No messages yet. Ask something to begin.';
+            responsesEl.appendChild(placeholder);
             return;
           }
-          responsesEl.textContent = '';
-          const ordered = messages.slice().reverse();
-          for (const message of ordered) {
-            const wrapper = document.createElement('div');
-            const header = document.createElement('div');
-            header.className = 'entry-header';
-            const timestamp = formatTimestamp(message.timestamp);
+
+          responsesEl.innerHTML = '';
+
+          // Группируем сообщения в пары (вопрос + ответ)
+          const pairs = [];
+          let currentPair = null;
+          for (const message of messages) {
             if (message.role === 'user') {
-              header.textContent = 'You [' + timestamp + ']';
-            } else {
-              header.textContent = 'LLM [' + timestamp + ']';
+              if (currentPair) {
+                pairs.push(currentPair);
+              }
+              currentPair = { question: message, answer: null };
+            } else if (message.role !== 'user' && currentPair) {
+              currentPair.answer = message;
             }
-            const body = document.createElement('pre');
-            body.className = 'entry-body';
-            body.textContent = message.content || '';
-            wrapper.appendChild(header);
-            wrapper.appendChild(body);
-            responsesEl.appendChild(wrapper);
+          }
+          if (currentPair) {
+            pairs.push(currentPair);
+          }
+
+          // Отображаем пары в обратном порядке (последняя наверху)
+          const orderedPairs = pairs.reverse();
+          for (const pair of orderedPairs) {
+            const pairWrapper = document.createElement('div');
+            pairWrapper.className = 'message-pair';
+
+            // Вопрос
+            if (pair.question) {
+              const questionWrapper = document.createElement('div');
+              const questionHeader = document.createElement('div');
+              questionHeader.className = 'entry-header';
+              questionHeader.textContent = 'You [' + formatTimestamp(pair.question.timestamp) + ']';
+              const questionBody = document.createElement('pre');
+              questionBody.className = 'entry-body';
+              questionBody.textContent = pair.question.content || '';
+              questionWrapper.appendChild(questionHeader);
+              questionWrapper.appendChild(questionBody);
+              pairWrapper.appendChild(questionWrapper);
+            }
+
+            // Ответ
+            if (pair.answer) {
+              const answerWrapper = document.createElement('div');
+              const answerHeader = document.createElement('div');
+              answerHeader.className = 'entry-header';
+              answerHeader.textContent = 'LLM [' + formatTimestamp(pair.answer.timestamp) + ']';
+              const answerBody = document.createElement('pre');
+              answerBody.className = 'entry-body';
+              answerBody.textContent = pair.answer.content || '';
+              answerWrapper.appendChild(answerHeader);
+              answerWrapper.appendChild(answerBody);
+              pairWrapper.appendChild(answerWrapper);
+            }
+
+            responsesEl.appendChild(pairWrapper);
           }
         }
 
