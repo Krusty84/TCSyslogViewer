@@ -90,6 +90,31 @@ class AiChatWebviewProvider {
   }
 
   buildHtml() {
+    const config = this.controller?.getAiChatAgentInfo?.() ?? {};
+    const providerValue =
+      typeof config?.provider === "string" && config.provider.trim()
+        ? config.provider.trim()
+        : "LLM";
+    const modelValue =
+      typeof config?.model === "string" && config.model.trim()
+        ? config.model.trim()
+        : "model";
+
+    const escapeHtml = (value) =>
+      String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
+    const headerLabel = `LLM: ${escapeHtml(providerValue)}, Model: ${escapeHtml(
+      modelValue
+    )}`;
+    const infoJson = JSON.stringify({
+      provider: providerValue,
+      model: modelValue,
+    }).replace(/</g, "\\u003c");
     const nonce = Date.now().toString(36);
     const template = `<!doctype html>
 <html lang="en">
@@ -158,7 +183,16 @@ class AiChatWebviewProvider {
       .llm-info {
         font-size: 0.85rem;
         opacity: 0.8;
-        margin-left: 0.6rem;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.8rem;
+      }
+      .header h2 {
+        margin: 0;
+        font-size: 1rem;
       }
       .responses {
         border: 1px solid var(--vscode-editorWidget-border);
@@ -224,7 +258,10 @@ class AiChatWebviewProvider {
     </style>
   </head>
   <body>
-    <h2>Ask LLM anything</h2>
+    <div class="header">
+      <h2>Ask LLM anything</h2>
+      <span id="llm-info" class="llm-info">LLM: ?, Model: ?</span>
+    </div>
     <div class="responses" id="responses">No messages yet. Ask something to begin.</div>
     <form id="ask-form">
       <div class="input-container">
@@ -233,9 +270,6 @@ class AiChatWebviewProvider {
           <span id="button-text">Ask</span>
           <span id="button-spinner" class="button-spinner hidden"></span>
         </button>
-      </div>
-      <div class="ask-row">
-        <span id="llm-info" class="llm-info">LLM: ?, Model: ?</span>
       </div>
     </form>
     <div class="status">
@@ -254,7 +288,20 @@ class AiChatWebviewProvider {
         const buttonText = document.getElementById('button-text');
         const buttonSpinner = document.getElementById('button-spinner');
         const llmInfoEl = document.getElementById('llm-info');
-        
+
+        const storedInfo =
+          typeof vscode.getState === 'function' ? vscode.getState() : null;
+        const defaultInfo = JSON.parse('__LLM_INFO__');
+        let currentInfo =
+          storedInfo && storedInfo.provider ? storedInfo : defaultInfo;
+        llmInfoEl.textContent = formatLlmInfo(currentInfo);
+        if (
+          !(storedInfo && storedInfo.provider) &&
+          typeof vscode.setState === 'function'
+        ) {
+          vscode.setState(currentInfo);
+        }
+
         let isProcessing = false;
 
         form.addEventListener('submit', (event) => {
@@ -277,38 +324,47 @@ class AiChatWebviewProvider {
         window.addEventListener('message', (event) => {
           const payload = event.data || {};
           if (payload.type === 'history') {
-            if (payload.messages && payload.messages.length > 0) {
-              updateResponses(payload.messages);
-              if (payload.llmInfo) {
-                llmInfoEl.textContent = formatLlmInfo(payload.llmInfo);
+            const messages = payload.messages || [];
+            updateResponses(messages);
+            if (payload.llmInfo) {
+              currentInfo = payload.llmInfo;
+              llmInfoEl.textContent = formatLlmInfo(currentInfo);
+              if (typeof vscode.setState === 'function') {
+                vscode.setState(currentInfo);
               }
+            }
+            if (messages.length > 0) {
               questionInput.value = '';
             }
+            setWorking(false);
+            setStatus('', false);
+            isProcessing = false;
           } else if (payload.type === 'notification') {
-            setStatus(payload.message || 'Notification received', false);
+            setStatus(payload.message || '', false);
+            setWorking(false);
+            isProcessing = false;
           } else if (payload.type === 'status') {
-            const working = payload.message === 'Working...' || payload.message === 'Sending...';
+            const working =
+              payload.message === 'Working...' || payload.message === 'Sending...';
             setStatus(payload.message || '', working);
-            if (payload.message === 'Done') {
+            setWorking(working);
+            if (!working) {
               isProcessing = false;
-              setWorking(false);
-              setStatus('', false);
             }
           }
         });
 
         function setWorking(value) {
           button.disabled = value;
+          button.classList.toggle('working', value);
+          buttonText.textContent = value ? 'Working...' : 'Ask';
+          questionInput.readOnly = value;
           if (value) {
-            button.classList.add('working');
-            buttonText.textContent = 'Ask';
             questionInput.value = '';
             questionInput.placeholder = 'Sending...';
             questionInput.classList.add('sending');
             buttonSpinner.classList.remove('hidden');
           } else {
-            button.classList.remove('working');
-            buttonText.textContent = 'Ask';
             questionInput.placeholder = 'Type your question about the open syslog...';
             questionInput.classList.remove('sending');
             buttonSpinner.classList.add('hidden');
@@ -335,7 +391,7 @@ class AiChatWebviewProvider {
 
           responsesEl.innerHTML = '';
 
-          // Группируем сообщения в пары (вопрос + ответ)
+          // Group messages into question-answer pairs
           const pairs = [];
           let currentPair = null;
           for (const message of messages) {
@@ -352,13 +408,13 @@ class AiChatWebviewProvider {
             pairs.push(currentPair);
           }
 
-          // Отображаем пары в обратном порядке (последняя наверху)
+          // Inverse dialog order (last on the top)
           const orderedPairs = pairs.reverse();
           for (const pair of orderedPairs) {
             const pairWrapper = document.createElement('div');
             pairWrapper.className = 'message-pair';
 
-            // Вопрос
+            // Question
             if (pair.question) {
               const questionWrapper = document.createElement('div');
               const questionHeader = document.createElement('div');
@@ -372,7 +428,7 @@ class AiChatWebviewProvider {
               pairWrapper.appendChild(questionWrapper);
             }
 
-            // Ответ
+            // Response
             if (pair.answer) {
               const answerWrapper = document.createElement('div');
               const answerHeader = document.createElement('div');
@@ -399,15 +455,24 @@ class AiChatWebviewProvider {
         }
 
         function formatLlmInfo(info) {
-          const provider = info.provider || 'LLM';
-          const model = info.model || 'model';
+          const provider =
+            info && info.provider && String(info.provider).trim()
+              ? String(info.provider).trim()
+              : 'LLM';
+          const model =
+            info && info.model && String(info.model).trim()
+              ? String(info.model).trim()
+              : 'model';
           return 'LLM: ' + provider + ', Model: ' + model;
         }
       })();
     </script>
   </body>
 </html>`;
-    return template.replace(/\{\{nonce\}\}/g, nonce);
+    return template
+      .replace(/\{\{nonce\}\}/g, nonce)
+      .replace("LLM: ?, Model: ?", headerLabel)
+      .replace(/__LLM_INFO__/g, infoJson);
   }
 }
 
