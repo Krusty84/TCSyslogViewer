@@ -12,13 +12,11 @@ export function getAiConfiguration() {
   const provider = read(config, "provider", "deepseek");
   const model = read(config, "model", "deepseek-chat");
   const apiKey = read(config, "apiKey", "");
-  const serverToken = read(config, "server.authToken", "");
   const workspaceRoot = read(config, "workspace", "${workspaceFolder}");
   return {
     provider,
     model,
     apiKey,
-    serverToken,
     workspaceRoot,
   };
 }

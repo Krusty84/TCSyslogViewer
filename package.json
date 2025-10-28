@@ -323,7 +323,11 @@
         },
         "tcSyslogViewer.ai.provider": {
           "type": "string",
-          "enum": ["deepseek", "openai", "ollama"],
+          "enum": [
+            "deepseek",
+            "openai",
+            "ollama"
+          ],
           "default": "deepseek",
           "description": "LLM provider used by the AI analysis view (mirrors config.json provider)."
         },
@@ -337,15 +341,10 @@
           "default": "",
           "description": "API key for the selected provider (stored in settings, consider using Secret Storage)."
         },
-        "tcSyslogViewer.ai.server.authToken": {
-          "type": "string",
-          "default": "",
-          "description": "Optional auth token mirroring MCP server authentication (used when proxying requests)."
-        },
         "tcSyslogViewer.ai.workspace": {
           "type": "string",
           "default": "${workspaceFolder}",
-          "description": "Logical workspace root used by the AI tools (mirrors WORKING_DIR)."
+          "description": "Logical workspace root used by the AI tools."
         }
       }
     },

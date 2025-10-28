@@ -68,7 +68,7 @@ class AiChatWebviewProvider {
       this.postNotification("Please enter a question.");
       return;
     }
-    this.postStatus("Sending...");
+    this.postStatus("Thinking...");
     let result = null;
     try {
       result = await this.controller.sendAiChatMessage(trimmed);
@@ -310,7 +310,7 @@ class AiChatWebviewProvider {
         const defaultPlaceholder =
           questionInput.getAttribute('placeholder') ||
           'Type your question about the open syslog...';
-        const sendingPlaceholder = 'Sending...';
+        const sendingPlaceholder = 'Thinking...';
 
         const storedState =
           typeof vscode.getState === 'function' ? vscode.getState() : null;
@@ -348,7 +348,7 @@ class AiChatWebviewProvider {
           }
           isProcessing = true;
           setWorking(true);
-          setStatus('Sending...', true);
+          setStatus('Thinking...', true);
           vscode.postMessage({ type: 'ask', text: value });
         });
 
@@ -370,7 +370,7 @@ class AiChatWebviewProvider {
             isProcessing = awaitingResponse;
             if (awaitingResponse) {
               setWorking(true, { skipClear: true });
-              setStatus('Sending...', true);
+              setStatus('Thinking...', true);
             } else {
               setWorking(false, { resetInput: true });
               setStatus('', false);
@@ -381,7 +381,7 @@ class AiChatWebviewProvider {
             isProcessing = false;
           } else if (payload.type === 'status') {
             const working =
-              payload.message === 'Working...' || payload.message === 'Sending...';
+              payload.message === 'Working...' || payload.message === 'Thinking...';
             setStatus(payload.message || '', working);
             setWorking(working);
             if (!working) {
