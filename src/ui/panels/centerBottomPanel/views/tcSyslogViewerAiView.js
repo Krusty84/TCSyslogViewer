@@ -5,11 +5,15 @@ class AiChatWebviewProvider {
     this.controller = controller;
     this.disposable = undefined;
     this.webviewView = undefined;
+    this.lastStatusMessage = "";
   }
 
   resolveWebviewView(webviewView) {
     this.webviewView = webviewView;
-    webviewView.webview.options = { enableScripts: true };
+    webviewView.webview.options = {
+      enableScripts: true,
+      retainContextWhenHidden: true,
+    };
     webviewView.webview.html = this.buildHtml();
     this.postHistory();
     this.registerListeners(webviewView);
@@ -36,6 +40,17 @@ class AiChatWebviewProvider {
     if (subscription) {
       disposables.push(subscription);
     }
+
+    disposables.push(
+      webviewView.onDidChangeVisibility(() => {
+        if (webviewView.visible) {
+          this.postHistory();
+          if (this.lastStatusMessage) {
+            this.postStatus(this.lastStatusMessage);
+          }
+        }
+      })
+    );
 
     disposables.push(
       webviewView.onDidDispose(() => {
@@ -86,6 +101,7 @@ class AiChatWebviewProvider {
     if (!this.webviewView) {
       return;
     }
+    this.lastStatusMessage = message ?? "";
     this.webviewView.webview.postMessage({ type: "status", message });
   }
   buildHtml() {
@@ -109,6 +125,12 @@ class AiChatWebviewProvider {
     const headerLabel = `LLM: ${escapeHtml(providerValue)}, Model: ${escapeHtml(
       modelValue
     )}`;
+    const infoJson = JSON.stringify({
+      provider: providerValue,
+      model: modelValue,
+    })
+      .replace(/</g, "\\u003c")
+      .replace(/'/g, "\\'");
     const template = `<!doctype html>
 <html lang="en">
   <head>
@@ -285,6 +307,32 @@ class AiChatWebviewProvider {
         const buttonText = document.getElementById('button-text');
         const buttonSpinner = document.getElementById('button-spinner');
         const llmInfoEl = document.getElementById('llm-info');
+        const defaultPlaceholder =
+          questionInput.getAttribute('placeholder') ||
+          'Type your question about the open syslog...';
+        const sendingPlaceholder = 'Sending...';
+
+        const storedState =
+          typeof vscode.getState === 'function' ? vscode.getState() : null;
+        const defaultInfo = JSON.parse('__LLM_INFO__');
+        const storedInfo =
+          storedState && storedState.info ? storedState.info : null;
+        const storedMessages = Array.isArray(storedState?.messages)
+          ? storedState.messages
+          : [];
+        let currentInfo =
+          storedInfo &&
+          storedInfo.provider === defaultInfo.provider &&
+          storedInfo.model === defaultInfo.model
+            ? storedInfo
+            : defaultInfo;
+        llmInfoEl.textContent = formatLlmInfo(currentInfo);
+        updateResponses(storedMessages);
+
+        if (typeof vscode.setState === 'function') {
+          vscode.setState({ info: currentInfo, messages: storedMessages });
+        }
+
         let isProcessing = false;
 
         form.addEventListener('submit', (event) => {
@@ -307,52 +355,61 @@ class AiChatWebviewProvider {
         window.addEventListener('message', (event) => {
           const payload = event.data || {};
           if (payload.type === 'history') {
-            if (payload.messages && payload.messages.length > 0) {
-              updateResponses(payload.messages);
-              if (payload.llmInfo) {
-                llmInfoEl.textContent = formatLlmInfo(payload.llmInfo);
-                if (typeof vscode.setState === 'function') {
-                  vscode.setState(payload.llmInfo);
-                }
-              }
-              questionInput.value = '';
+            const messages = payload.messages || [];
+            updateResponses(messages);
+            if (payload.llmInfo) {
+              currentInfo = payload.llmInfo;
+              llmInfoEl.textContent = formatLlmInfo(currentInfo);
             }
-            // Проверка на ошибку в history
-            const hasError = payload.messages?.some(msg => msg.role === 'assistant' && msg.content?.includes('failed'));
-            if (hasError) {
-              setStatus(payload.messages.find(msg => msg.role === 'assistant')?.content || 'Error occurred', false);
-              isProcessing = false;
-              setWorking(false);
+            if (typeof vscode.setState === 'function') {
+              vscode.setState({ info: currentInfo, messages });
             }
-          } else if (payload.type === 'notification') {
-            const errorMessage = payload.message || 'Error occurred';
-            setStatus(errorMessage, false);
-            isProcessing = false;
-            setWorking(false); // Restore UI state
-          } else if (payload.type === 'status') {
-            const working = payload.message === 'Working...' || payload.message === 'Sending...';
-            setStatus(payload.message || '', working);
-            if (payload.message === 'Done' || !working) {
-              isProcessing = false;
-              setWorking(false);
+            const awaitingResponse =
+              messages.length > 0 &&
+              (messages[messages.length - 1]?.role === 'user');
+            isProcessing = awaitingResponse;
+            if (awaitingResponse) {
+              setWorking(true, { skipClear: true });
+              setStatus('Sending...', true);
+            } else {
+              setWorking(false, { resetInput: true });
               setStatus('', false);
             }
-          } else {
+          } else if (payload.type === 'notification') {
+            setStatus(payload.message || '', false);
+            setWorking(false);
+            isProcessing = false;
+          } else if (payload.type === 'status') {
+            const working =
+              payload.message === 'Working...' || payload.message === 'Sending...';
+            setStatus(payload.message || '', working);
+            setWorking(working);
+            if (!working) {
+              isProcessing = false;
+            }
           }
         });
 
-        function setWorking(value) {
+        function setWorking(value, options = {}) {
+          const skipClear = Boolean(options.skipClear);
+          const resetInput = Boolean(options.resetInput);
           button.disabled = value;
-          questionInput.disabled = value;
           button.classList.toggle('working', value);
-          buttonText.textContent = 'Ask';
+          buttonText.textContent = value ? 'Working...' : 'Ask';
+          questionInput.readOnly = value;
+          form.classList.toggle('form-disabled', value);
           if (value) {
-            questionInput.value = '';
-            questionInput.placeholder = 'Sending...';
+            if (!skipClear) {
+              questionInput.value = '';
+            }
+            questionInput.placeholder = sendingPlaceholder;
             questionInput.classList.add('sending');
             buttonSpinner.classList.remove('hidden');
           } else {
-            questionInput.placeholder = 'Type your question about the open syslog...';
+            if (resetInput) {
+              questionInput.value = '';
+            }
+            questionInput.placeholder = defaultPlaceholder;
             questionInput.classList.remove('sending');
             buttonSpinner.classList.add('hidden');
           }
@@ -444,7 +501,7 @@ class AiChatWebviewProvider {
     </script>
   </body>
 </html>`;
-    return template.replace("LLM: ?, Model: ?", headerLabel);
+    return template.replace(/__LLM_INFO__/g, infoJson);
   }
 }
 
