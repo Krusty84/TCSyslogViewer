@@ -292,7 +292,6 @@ class AiChatWebviewProvider {
       </div>
     </form>
     <div class="status">
-      <span id="status-spinner" class="spinner hidden"></span>
       <span id="status-text"></span>
     </div>
     <script nonce="${nonce}">
@@ -302,7 +301,6 @@ class AiChatWebviewProvider {
         const questionInput = document.getElementById('question');
         const responsesEl = document.getElementById('responses');
         const statusTextEl = document.getElementById('status-text');
-        const statusSpinner = document.getElementById('status-spinner');
         const button = document.getElementById('ask-button');
         const buttonText = document.getElementById('button-text');
         const buttonSpinner = document.getElementById('button-spinner');
@@ -417,11 +415,6 @@ class AiChatWebviewProvider {
 
         function setStatus(text, working) {
           statusTextEl.textContent = text || '';
-          if (working) {
-            statusSpinner.classList.remove('hidden');
-          } else {
-            statusSpinner.classList.add('hidden');
-          }
         }
 
         function updateResponses(messages) {

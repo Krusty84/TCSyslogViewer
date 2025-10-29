@@ -2,7 +2,7 @@
   "name": "tc-syslog-viewer",
   "displayName": "TC Syslog Viewer",
   "description": "Syntax color + Explorer for Teamcenter (Siemens Digital Industries Software) syslog files.",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "publisher": "AlexeySedoykin",
   "icon": "media/icon.png",
   "engines": {
