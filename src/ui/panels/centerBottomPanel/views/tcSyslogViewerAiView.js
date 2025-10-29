@@ -244,21 +244,6 @@ class AiChatWebviewProvider {
         white-space: pre-wrap;
         font-family: var(--vscode-editor-font-family);
       }
-      .status {
-        font-size: 0.85rem;
-        opacity: 0.8;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-      }
-      .spinner {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        border: 3px solid var(--vscode-editorWidget-border);
-        border-top-color: var(--vscode-button-background);
-        animation: spin 0.8s linear infinite;
-      }
       .button-spinner {
         width: 14px;
         height: 14px;
@@ -278,7 +263,7 @@ class AiChatWebviewProvider {
   </head>
   <body>
     <div class="header">
-      <h2>Ask LLM anything</h2>
+      <h2>Ask the LLM anything about open syslog</h2>
       <span id="llm-info" class="llm-info">${headerLabel}</span>
     </div>
     <div class="responses" id="responses">No messages yet. Ask something to begin.</div>
@@ -291,16 +276,12 @@ class AiChatWebviewProvider {
         </button>
       </div>
     </form>
-    <div class="status">
-      <span id="status-text"></span>
-    </div>
     <script nonce="${nonce}">
       (function() {
         const vscode = acquireVsCodeApi();
         const form = document.getElementById('ask-form');
         const questionInput = document.getElementById('question');
         const responsesEl = document.getElementById('responses');
-        const statusTextEl = document.getElementById('status-text');
         const button = document.getElementById('ask-button');
         const buttonText = document.getElementById('button-text');
         const buttonSpinner = document.getElementById('button-spinner');
@@ -332,6 +313,7 @@ class AiChatWebviewProvider {
         }
 
         let isProcessing = false;
+        let statusResetTimer = null;
 
         form.addEventListener('submit', (event) => {
           event.preventDefault();
@@ -393,7 +375,7 @@ class AiChatWebviewProvider {
           const resetInput = Boolean(options.resetInput);
           button.disabled = value;
           button.classList.toggle('working', value);
-          buttonText.textContent = value ? 'Working...' : 'Ask';
+          buttonText.textContent = value ? 'Thinking...' : 'Ask';
           questionInput.readOnly = value;
           form.classList.toggle('form-disabled', value);
           if (value) {
@@ -414,7 +396,24 @@ class AiChatWebviewProvider {
         }
 
         function setStatus(text, working) {
-          statusTextEl.textContent = text || '';
+          if (statusResetTimer) {
+            clearTimeout(statusResetTimer);
+            statusResetTimer = null;
+          }
+          const trimmed = typeof text === 'string' ? text.trim() : '';
+          if (trimmed) {
+            questionInput.placeholder = trimmed;
+            if (!working) {
+              statusResetTimer = setTimeout(() => {
+                statusResetTimer = null;
+                if (!isProcessing) {
+                  questionInput.placeholder = defaultPlaceholder;
+                }
+              }, 2500);
+            }
+          } else if (!isProcessing) {
+            questionInput.placeholder = defaultPlaceholder;
+          }
         }
 
         function updateResponses(messages) {
