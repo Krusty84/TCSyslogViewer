@@ -12,7 +12,10 @@ It parses large logs, organises their content into rich explorer views, and prov
 --
 
 ## Features
+### Release 1.2.0
+soon...
 
+### Release 1.0.0
 - **Tcserver syslog parsing** – Automatically recognises `.syslog` files and builds structured views of key sections, log levels, SQL dumps, journal data.
 - **Explorer views** – The activity-bar container exposes three tree views:
   - **Basic Content**: Overview and primary category hierarchy for the active log.
