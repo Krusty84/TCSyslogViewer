@@ -274,42 +274,66 @@
         },
         "tcSyslogViewer.colors.level.WARN.fg": {
           "type": "color-hex",
-          "default": "#b8860b",
+          "default": {
+            "light": "#b8860b",
+            "dark": "#ffb300"
+          },
           "description": "Log Level WARN foreground color"
         },
         "tcSyslogViewer.colors.level.WARN.bg": {
           "type": "color-hex",
-          "default": "#b8860b22",
+          "default": {
+            "light": "#b8860b22",
+            "dark": "#ffb3001a"
+          },
           "description": "Log Level WARN background color"
         },
         "tcSyslogViewer.colors.level.ERROR.fg": {
           "type": "color-hex",
-          "default": "#ff4242",
+          "default": {
+            "light": "#ff4242",
+            "dark": "#ff5252"
+          },
           "description": "Log Level ERROR foreground color"
         },
         "tcSyslogViewer.colors.level.ERROR.bg": {
           "type": "color-hex",
-          "default": "#ff424222",
+          "default": {
+            "light": "#ff424222",
+            "dark": "#ff52521a"
+          },
           "description": "Log Level ERROR background color"
         },
         "tcSyslogViewer.colors.level.NOTE.fg": {
           "type": "color-hex",
-          "default": "#3aa669",
+          "default": {
+            "light": "#3aa669",
+            "dark": "#4caf50"
+          },
           "description": "Log Level NOTE foreground color"
         },
         "tcSyslogViewer.colors.level.NOTE.bg": {
           "type": "color-hex",
-          "default": "#3aa66922",
+          "default": {
+            "light": "#3aa66922",
+            "dark": "#4caf501a"
+          },
           "description": "Log Level NOTE background color"
         },
         "tcSyslogViewer.colors.level.INFO.fg": {
           "type": "color-hex",
-          "default": "#1479ff",
+          "default": {
+            "light": "#1479ff",
+            "dark": "#64b5f6"
+          },
           "description": "Log Level INFO foreground color"
         },
         "tcSyslogViewer.colors.level.INFO.bg": {
           "type": "color-hex",
-          "default": "#1479ff22",
+          "default": {
+            "light": "#1479ff22",
+            "dark": "#64b5f61a"
+          },
           "description": "Log Level INFO background color"
         },
         "tcSyslogViewer.colors.level.DEBUG.fg": {
@@ -324,7 +348,7 @@
           "type": "color-hex",
           "default": {
             "light": "#5c677022",
-            "dark": "#90a4ae33"
+            "dark": "#90a4ae1a"
           },
           "description": "Log Level DEBUG background color"
         },
@@ -332,7 +356,7 @@
           "type": "color-hex",
           "default": {
             "light": "#c21850",
-            "dark": "#ef5350"
+            "dark": "#ff1744"
           },
           "description": "Log Level FATAL foreground color"
         },
@@ -340,7 +364,7 @@
           "type": "color-hex",
           "default": {
             "light": "#c2185022",
-            "dark": "#ef535033"
+            "dark": "#ff17441a"
           },
           "description": "Log Level FATAL background color"
         },
@@ -348,7 +372,7 @@
           "type": "color-hex",
           "default": {
             "light": "#7f868e",
-            "dark": "#b0bec5"
+            "dark": "#eceff1"
           },
           "description": "Timestamp foreground color"
         },
@@ -424,6 +448,22 @@
           "type": "string",
           "default": "${workspaceFolder}",
           "description": "Logical workspace root used by the AI tools."
+        },
+        "tcSyslogViewer.colors.id.fg": {
+          "type": "color-hex",
+          "default": {
+            "light": "#c586c0",
+            "dark": "#f48fb1"
+          },
+          "description": "Identifier foreground color"
+        },
+        "tcSyslogViewer.colors.message.fg": {
+          "type": "color-hex",
+          "default": {
+            "light": "#262627",
+            "dark": "#f5f5f5"
+          },
+          "description": "Message foreground color"
         }
       }
     },

@@ -109,19 +109,28 @@ export class SyslogController {
 
     this.reloadDecorationTypes();
 
+    const reapplyCurrentDecorations = () => {
+      if (!this.currentUri || !this.latestParsed) {
+        return;
+      }
+      const document = vscode.workspace.textDocuments.find(
+        (doc) => doc.uri.toString() === this.currentUri.toString()
+      );
+      if (document) {
+        this.applyDecorations(document, this.latestParsed);
+      }
+    };
+
     this.context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((event) => {
         if (this.shouldReloadDecorations(event)) {
           this.reloadDecorationTypes();
-          if (this.currentUri && this.latestParsed) {
-            const document = vscode.workspace.textDocuments.find(
-              (doc) => doc.uri.toString() === this.currentUri.toString()
-            );
-            if (document) {
-              this.applyDecorations(document, this.latestParsed);
-            }
-          }
+          reapplyCurrentDecorations();
         }
+      }),
+      vscode.window.onDidChangeActiveColorTheme(() => {
+        this.reloadDecorationTypes();
+        reapplyCurrentDecorations();
       })
     );
   }
@@ -159,13 +168,111 @@ export class SyslogController {
     // Decorations are recreated so configuration changes (colors, fonts) take effect immediately.
     this.disposeDecorationTypes();
     const config = vscode.workspace.getConfiguration("tcSyslogViewer");
+    const themeKind =
+      vscode.window?.activeColorTheme?.kind ?? vscode.ColorThemeKind.Dark;
+    const themePreference = (() => {
+      switch (themeKind) {
+        case vscode.ColorThemeKind.Light:
+          return [
+            "light",
+            "default",
+            "dark",
+            "hclight",
+            "hc",
+            "hcdark",
+            "highcontrastlight",
+            "highcontrast",
+            "highcontrastdark",
+          ];
+        case vscode.ColorThemeKind.HighContrastLight:
+          return [
+            "highcontrastlight",
+            "hclight",
+            "light",
+            "default",
+            "hc",
+            "highcontrast",
+            "hcdark",
+            "dark",
+          ];
+        case vscode.ColorThemeKind.HighContrastDark:
+          return [
+            "highcontrastdark",
+            "hcdark",
+            "dark",
+            "default",
+            "hc",
+            "highcontrast",
+            "hclight",
+            "light",
+          ];
+        case vscode.ColorThemeKind.HighContrast:
+          return [
+            "highcontrast",
+            "hc",
+            "default",
+            "dark",
+            "light",
+            "hcdark",
+            "hclight",
+          ];
+        case vscode.ColorThemeKind.Dark:
+        default:
+          return [
+            "dark",
+            "default",
+            "light",
+            "hcdark",
+            "hc",
+            "hclight",
+            "highcontrastdark",
+            "highcontrast",
+            "highcontrastlight",
+          ];
+      }
+    })();
+
+    const normalizeColorValue = (value) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed.length ? trimmed : null;
+      }
+      if (value && typeof value === "object") {
+        const map = new Map();
+        for (const [key, raw] of Object.entries(value)) {
+          if (typeof raw !== "string") {
+            continue;
+          }
+          const trimmed = raw.trim();
+          if (!trimmed.length) {
+            continue;
+          }
+          map.set(key.toLowerCase(), trimmed);
+        }
+        for (const key of themePreference) {
+          if (map.has(key)) {
+            return map.get(key);
+          }
+        }
+        for (const candidate of map.values()) {
+          if (candidate) {
+            return candidate;
+          }
+        }
+      }
+      return null;
+    };
+
+    const resolveColorSetting = (value, fallback) =>
+      normalizeColorValue(value) ?? normalizeColorValue(fallback) ?? null;
+
     const levelDefaults = {
-      FATAL: { fg: "#ff00aa", bg: "#ff00aa22" },
-      ERROR: { fg: "#ff4242", bg: "#ff424222" },
-      WARN: { fg: "#b8860b", bg: "#b8860b22" },
-      NOTE: { fg: "#3aa669", bg: "#3aa66922" },
-      INFO: { fg: "#1479ff", bg: "#1479ff22" },
-      DEBUG: { fg: "#888888", bg: "#88888822" },
+      FATAL: { fg: "#ff1744", bg: "#ff17441a" },
+      ERROR: { fg: "#ff5252", bg: "#ff52521a" },
+      WARN: { fg: "#ffb300", bg: "#ffb3001a" },
+      NOTE: { fg: "#4caf50", bg: "#4caf501a" },
+      INFO: { fg: "#64b5f6", bg: "#64b5f61a" },
+      DEBUG: { fg: "#90a4ae", bg: "#90a4ae1a" },
     };
     const tokenDefaults = {
       timestamp: "#262627ff",
@@ -177,7 +284,6 @@ export class SyslogController {
       hierarchyBackground: "#f8f53b40",
       accessBackground: "#4b9eff33",
       workflowBackground: "#5c98ff55",
-      accessBackground: "#4b9eff33",
     };
     const fontFamilySetting = config.get("font.family");
     const fontFamily =
@@ -203,30 +309,32 @@ export class SyslogController {
 
     this.levelDecorationTypes = new Map();
     this.levelBackgroundDecorationTypes = new Map();
-    const resolveLevelColor = (key, type) => {
+    const resolveLevelColor = (key, type, fallback) => {
       const value = config.get(`colors.level.${key}.${type}`);
-      return typeof value === "string" && value.trim() ? value.trim() : null;
+      return resolveColorSetting(value, fallback);
     };
 
     for (const level of LEVEL_ORDER) {
       const configKey = LEVEL_CONFIG_OVERRIDES[level] ?? level;
-      let fgValue = resolveLevelColor(configKey, "fg");
-      let bgValue = resolveLevelColor(configKey, "bg");
+      let fgValue = resolveLevelColor(
+        configKey,
+        "fg",
+        levelDefaults[level]?.fg
+      );
+      let bgValue = resolveLevelColor(
+        configKey,
+        "bg",
+        levelDefaults[level]?.bg
+      );
       if (!fgValue && configKey !== level) {
-        fgValue = resolveLevelColor(level, "fg");
+        fgValue = resolveLevelColor(level, "fg", levelDefaults[level]?.fg);
       }
       if (!bgValue && configKey !== level) {
-        bgValue = resolveLevelColor(level, "bg");
+        bgValue = resolveLevelColor(level, "bg", levelDefaults[level]?.bg);
       }
-      const defaults = levelDefaults[level] ?? {};
-      const color =
-        fgValue && typeof fgValue === "string"
-          ? fgValue
-          : defaults.fg ?? "#ffffff";
-      const backgroundColor =
-        bgValue && typeof bgValue === "string"
-          ? bgValue
-          : defaults.bg ?? undefined;
+      const defaults = levelDefaults[level] ?? levelDefaults.Generic;
+      const color = fgValue ?? defaults.fg ?? "#ffffff";
+      const backgroundColor = bgValue ?? defaults.bg ?? undefined;
 
       const tokenOptions = {
         color,
@@ -276,11 +384,10 @@ export class SyslogController {
     this.envValueDecorationType =
       vscode.window.createTextEditorDecorationType(envValueOptions);
 
-    const timestampColorSetting = config.get("colors.timestamp.fg");
-    const timestampColor =
-      typeof timestampColorSetting === "string" && timestampColorSetting
-        ? timestampColorSetting
-        : tokenDefaults.timestamp;
+    const timestampColor = resolveColorSetting(
+      config.get("colors.timestamp.fg"),
+      tokenDefaults.timestamp
+    );
     const timestampOptions = {
       color: timestampColor,
       rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
@@ -289,11 +396,10 @@ export class SyslogController {
     this.timestampDecorationType =
       vscode.window.createTextEditorDecorationType(timestampOptions);
 
-    const idColorSetting = config.get("colors.id.fg");
-    const idColor =
-      typeof idColorSetting === "string" && idColorSetting
-        ? idColorSetting
-        : tokenDefaults.id;
+    const idColor = resolveColorSetting(
+      config.get("colors.id.fg"),
+      tokenDefaults.id
+    );
     const idOptions = {
       color: idColor,
       rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
@@ -302,11 +408,10 @@ export class SyslogController {
     this.idDecorationType =
       vscode.window.createTextEditorDecorationType(idOptions);
 
-    const messageColorSetting = config.get("colors.message.fg");
-    const messageColor =
-      typeof messageColorSetting === "string" && messageColorSetting
-        ? messageColorSetting
-        : tokenDefaults.message;
+    const messageColor = resolveColorSetting(
+      config.get("colors.message.fg"),
+      tokenDefaults.message
+    );
     const messageOptions = {
       color: messageColor,
       rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
@@ -315,11 +420,10 @@ export class SyslogController {
     this.messageDecorationType =
       vscode.window.createTextEditorDecorationType(messageOptions);
 
-    const sqlInlineSetting = config.get("colors.sql.inline.background");
-    const sqlInlineBackground =
-      typeof sqlInlineSetting === "string" && sqlInlineSetting
-        ? sqlInlineSetting
-        : tokenDefaults.sqlInlineBackground;
+    const sqlInlineBackground = resolveColorSetting(
+      config.get("colors.sql.inline.background"),
+      tokenDefaults.sqlInlineBackground
+    );
     this.inlineSqlDecorationType = vscode.window.createTextEditorDecorationType(
       {
         backgroundColor: sqlInlineBackground,
@@ -328,36 +432,31 @@ export class SyslogController {
       }
     );
 
-    const sqlBackgroundSetting = config.get("colors.sql.background");
-    const sqlBackground =
-      typeof sqlBackgroundSetting === "string" && sqlBackgroundSetting
-        ? sqlBackgroundSetting
-        : tokenDefaults.sqlBackground;
+    const sqlBackground = resolveColorSetting(
+      config.get("colors.sql.background"),
+      tokenDefaults.sqlBackground
+    );
     this.sqlDecorationType = vscode.window.createTextEditorDecorationType({
       backgroundColor: sqlBackground,
       isWholeLine: true,
       rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
     });
 
-    const journalBackgroundSetting = config.get("colors.journal.background");
-    const journalBackground =
-      typeof journalBackgroundSetting === "string" && journalBackgroundSetting
-        ? journalBackgroundSetting
-        : tokenDefaults.journalBackground;
+    const journalBackground = resolveColorSetting(
+      config.get("colors.journal.background"),
+      tokenDefaults.journalBackground
+    );
     this.journalDecorationType = vscode.window.createTextEditorDecorationType({
       backgroundColor: journalBackground,
       isWholeLine: true,
       rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
     });
 
-    const hierarchyBackgroundSetting = config.get(
-      "colors.journal.hierarchy.background"
-    );
     const hierarchyBackground =
-      typeof hierarchyBackgroundSetting === "string" &&
-      hierarchyBackgroundSetting
-        ? hierarchyBackgroundSetting
-        : tokenDefaults.hierarchyBackground ?? journalBackground;
+      resolveColorSetting(
+        config.get("colors.journal.hierarchy.background"),
+        tokenDefaults.hierarchyBackground ?? journalBackground
+      ) ?? journalBackground;
     this.hierarchyTraceDecorationType =
       vscode.window.createTextEditorDecorationType({
         backgroundColor: hierarchyBackground,
@@ -365,11 +464,10 @@ export class SyslogController {
         rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
       });
 
-    const accessBackgroundSetting = config.get("colors.access.background");
-    const accessBackground =
-      typeof accessBackgroundSetting === "string" && accessBackgroundSetting
-        ? accessBackgroundSetting
-        : tokenDefaults.accessBackground;
+    const accessBackground = resolveColorSetting(
+      config.get("colors.access.background"),
+      tokenDefaults.accessBackground
+    );
     this.accessCheckDecorationType =
       vscode.window.createTextEditorDecorationType({
         backgroundColor: accessBackground,
@@ -377,11 +475,10 @@ export class SyslogController {
         rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
       });
 
-    const workflowBackgroundSetting = config.get("colors.workflow.background");
-    const workflowBackground =
-      typeof workflowBackgroundSetting === "string" && workflowBackgroundSetting
-        ? workflowBackgroundSetting
-        : tokenDefaults.workflowBackground;
+    const workflowBackground = resolveColorSetting(
+      config.get("colors.workflow.background"),
+      tokenDefaults.workflowBackground
+    );
     this.workflowHandlerDecorationType =
       vscode.window.createTextEditorDecorationType({
         backgroundColor: workflowBackground,
