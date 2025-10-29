@@ -203,17 +203,28 @@ export class SyslogController {
 
     this.levelDecorationTypes = new Map();
     this.levelBackgroundDecorationTypes = new Map();
+    const resolveLevelColor = (key, type) => {
+      const value = config.get(`colors.level.${key}.${type}`);
+      return typeof value === "string" && value.trim() ? value.trim() : null;
+    };
+
     for (const level of LEVEL_ORDER) {
       const configKey = LEVEL_CONFIG_OVERRIDES[level] ?? level;
-      const fgValue = config.get(`colors.level.${configKey}.fg`);
-      const bgValue = config.get(`colors.level.${configKey}.bg`);
+      let fgValue = resolveLevelColor(configKey, "fg");
+      let bgValue = resolveLevelColor(configKey, "bg");
+      if (!fgValue && configKey !== level) {
+        fgValue = resolveLevelColor(level, "fg");
+      }
+      if (!bgValue && configKey !== level) {
+        bgValue = resolveLevelColor(level, "bg");
+      }
       const defaults = levelDefaults[level] ?? {};
       const color =
-        typeof fgValue === "string" && fgValue
+        fgValue && typeof fgValue === "string"
           ? fgValue
           : defaults.fg ?? "#ffffff";
       const backgroundColor =
-        typeof bgValue === "string" && bgValue
+        bgValue && typeof bgValue === "string"
           ? bgValue
           : defaults.bg ?? undefined;
 

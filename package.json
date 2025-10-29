@@ -272,6 +272,46 @@
           },
           "description": "Log Level WARNING background color"
         },
+        "tcSyslogViewer.colors.level.WARN.fg": {
+          "type": "color-hex",
+          "default": "#b8860b",
+          "description": "Log Level WARN foreground color"
+        },
+        "tcSyslogViewer.colors.level.WARN.bg": {
+          "type": "color-hex",
+          "default": "#b8860b22",
+          "description": "Log Level WARN background color"
+        },
+        "tcSyslogViewer.colors.level.ERROR.fg": {
+          "type": "color-hex",
+          "default": "#ff4242",
+          "description": "Log Level ERROR foreground color"
+        },
+        "tcSyslogViewer.colors.level.ERROR.bg": {
+          "type": "color-hex",
+          "default": "#ff424222",
+          "description": "Log Level ERROR background color"
+        },
+        "tcSyslogViewer.colors.level.NOTE.fg": {
+          "type": "color-hex",
+          "default": "#3aa669",
+          "description": "Log Level NOTE foreground color"
+        },
+        "tcSyslogViewer.colors.level.NOTE.bg": {
+          "type": "color-hex",
+          "default": "#3aa66922",
+          "description": "Log Level NOTE background color"
+        },
+        "tcSyslogViewer.colors.level.INFO.fg": {
+          "type": "color-hex",
+          "default": "#1479ff",
+          "description": "Log Level INFO foreground color"
+        },
+        "tcSyslogViewer.colors.level.INFO.bg": {
+          "type": "color-hex",
+          "default": "#1479ff22",
+          "description": "Log Level INFO background color"
+        },
         "tcSyslogViewer.colors.level.DEBUG.fg": {
           "type": "color-hex",
           "default": {
