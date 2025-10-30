@@ -12,8 +12,11 @@ It parses large logs, organises their content into rich explorer views, and prov
 --
 
 ## Features
-### Release 1.2.0
-soon...
+### Release 1.2.2
+- **Dark IDE color scheme** – Syslog elements highlighting adapted for dark IDE ([Issue #1)](https://github.com/Krusty84/TCSyslogViewer/issues/1) color scheme (extended user-editable scheme for comfortable viewing in dark profile). <br> Go to settings: Extensions->TC Syslog Viewer>Colors...
+- **LLM Syslog Analysis** - Sending syslog to LLM (DeepSeek, ChatGPT, or local) for automatic analysis and conclusion on issues.<br>Go to settings: Extensions->TC Syslog Viewer>Ai...
+
+![image](https://github.com/user-attachments/assets/be5eaf05-ff97-49cb-b3aa-27219bf9a619?raw=true)
 
 ### Release 1.0.0
 - **Tcserver syslog parsing** – Automatically recognises `.syslog` files and builds structured views of key sections, log levels, SQL dumps, journal data.
