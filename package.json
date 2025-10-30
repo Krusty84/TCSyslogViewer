@@ -2,8 +2,9 @@
   "name": "tc-syslog-viewer",
   "displayName": "TC Syslog Viewer",
   "description": "Syntax color + Explorer for Teamcenter (Siemens Digital Industries Software) syslog files.",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "publisher": "AlexeySedoykin",
+  "homepage": "https://github.com/Krusty84/TCSyslogViewer/blob/main/README.md",
   "icon": "media/icon.png",
   "engines": {
     "vscode": "^1.92.0"
