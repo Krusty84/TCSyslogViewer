@@ -7,7 +7,7 @@ It parses large logs, organises their content into rich explorer views, and prov
 
 
 ## Features
-### Release 1.2.2
+### Release 1.2.3
 - **Dark IDE color scheme** – Syslog elements highlighting adapted for dark IDE ([Issue #1)](https://github.com/Krusty84/TCSyslogViewer/issues/1) color scheme (extended user-editable scheme for comfortable viewing in dark profile). <br> Go to settings: Extensions->TC Syslog Viewer>Colors...
 - **LLM Syslog Analysis** - Sending syslog to LLM (DeepSeek, ChatGPT, or local) for automatic analysis and conclusion on issues.<br>Go to settings: Extensions->TC Syslog Viewer>Ai...
 
