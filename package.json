@@ -40,7 +40,6 @@
     "onCommand:tcSyslogViewer.removeFavorite",
     "onCommand:tcSyslogViewer.openFavorite",
     "onCommand:tcSyslogViewer.openSyslogFile",
-    "onCommand:tcSyslogViewer.chatWithAi",
     "onCommand:tcSyslogViewer.closeOccurrencesResult",
     "onCommand:tcSyslogViewer.findAllOccurrencesOpenInEditor",
     "onView:tcSyslogViewerBasic",
@@ -82,10 +81,6 @@
       {
         "command": "tcSyslogViewer.openSyslogFile",
         "title": "TC Syslog Viewer: Open Syslog File"
-      },
-      {
-        "command": "tcSyslogViewer.chatWithAi",
-        "title": "TC Syslog Viewer: Chat w/ AI"
       },
       {
         "command": "tcSyslogViewer.closeOccurrencesResult",
@@ -166,10 +161,6 @@
           "when": "true"
         },
         {
-          "command": "tcSyslogViewer.chatWithAi",
-          "when": "resourceLangId == teamcenter-syslog"
-        },
-        {
           "command": "tcSyslogViewer.editFavorite",
           "when": "false"
         },
@@ -247,10 +238,6 @@
         },
         {
           "command": "tcSyslogViewer.findAllOccurrencesOpenInEditor",
-          "when": "resourceLangId == teamcenter-syslog"
-        },
-        {
-          "command": "tcSyslogViewer.chatWithAi",
           "when": "resourceLangId == teamcenter-syslog"
         }
       ]
