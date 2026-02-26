@@ -53,3 +53,7 @@ Context menus in the explorer and editor provide shortcuts for the same actions 
 ![image](https://github.com/user-attachments/assets/64bafcab-706f-46d6-a4fd-06b70a100299?raw=true)
 
 <img width="1295" height="586" alt="image" src="https://github.com/user-attachments/assets/b5d1834e-6872-44b7-ba22-b535cd412ea3" />
+
+## Disclaimer
+
+Teamcenter and Siemens are trademarks of Siemens AG. This project is not affiliated with, endorsed by, or sponsored by Siemens AG. This is a community-driven open source project created to enhance the development experience for Teamcenter admins,developers, etc.
