@@ -1,4 +1,4 @@
-# TC Syslog Viewer [![Get it on VS Marketplace](https://img.shields.io/badge/Get%20it%20on%20VS%20Marketplace-007ACC?style=for-the-badge&logo=visual-studio-code&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=AlexeySedoykin.tc-syslog-viewer)
+# TC Syslog Viewer [![Available on Visual Studio Marketplace](https://img.shields.io/badge/Available%20on-Visual%20Studio%20Marketplace-0078D4?style=for-the-badge&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=AlexeySedoykin.tc-syslog-viewer)
 
 ## What is this?
 
