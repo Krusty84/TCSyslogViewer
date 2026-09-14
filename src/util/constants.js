@@ -1,8 +1,8 @@
-/**
- * Core constants shared across the TC Syslog viewer extension.
- * - Level configuration controls how log levels are rendered and labeled.
- * - Node context values are used for tree view item classification.
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
  */
+
 export const LEVEL_ORDER = ["FATAL", "ERROR", "WARN", "NOTE", "INFO", "DEBUG"];
 
 export const LEVEL_CONFIG_OVERRIDES = { WARN: "WARNING" };

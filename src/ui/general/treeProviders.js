@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
+ */
+
 import * as vscode from "vscode";
 import { NODE_CONTEXT } from "../../util/constants.js";
 import { truncate } from "../../util/helpers.js";
@@ -161,7 +166,7 @@ export class OccurrencesTreeDataProvider {
 
   removeSession(sessionId) {
     const index = this.sessions.findIndex(
-      (session) => session.id === sessionId
+      (session) => session.id === sessionId,
     );
     if (index === -1) {
       return null;
@@ -208,7 +213,7 @@ export class OccurrencesTreeDataProvider {
       const plural = matchCount === 1 && !truncated ? "" : "es";
       const treeItem = new vscode.TreeItem(
         label,
-        vscode.TreeItemCollapsibleState.Collapsed
+        vscode.TreeItemCollapsibleState.Collapsed,
       );
       treeItem.description = `${countLabel} match${plural}`;
       const locationLabel = session?.resource
@@ -237,7 +242,7 @@ export class OccurrencesTreeDataProvider {
         : `${session.matches.length}`;
       const summaryLabel = `${countLabel} matches for "${truncate(
         session.query ?? "",
-        40
+        40,
       )}"`;
       const summaryItem = new vscode.TreeItem(summaryLabel);
       const timestamp = session.createdAt.toLocaleString();
@@ -254,7 +259,7 @@ export class OccurrencesTreeDataProvider {
       const label = truncate(node.text ?? "", 140) || "(empty line)";
       const item = new vscode.TreeItem(
         label,
-        vscode.TreeItemCollapsibleState.None
+        vscode.TreeItemCollapsibleState.None,
       );
       const lineNumber = (node.line ?? 0) + 1;
       item.description = `Line ${lineNumber}`;

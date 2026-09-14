@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
+ */
+
 import * as vscode from "vscode";
 import { SyslogAiAgent } from "../ai/syslogAiAgent.js";
 import { getAiDisplayName } from "../ai/agentConfig.js";
@@ -20,7 +25,7 @@ export class AiChatManager {
           this.agent.refreshConfiguration();
           this._onDidChange.fire(this.getMessages());
         }
-      })
+      }),
     );
   }
 
@@ -62,12 +67,10 @@ export class AiChatManager {
     this.messages.push(userEntry);
     this._onDidChange.fire(this.getMessages());
 
-    const history = this.messages
-      .slice(0, -1)
-      .map((message) => ({
-        role: message.role === "user" ? "user" : "assistant",
-        content: message.content,
-      }));
+    const history = this.messages.slice(0, -1).map((message) => ({
+      role: message.role === "user" ? "user" : "assistant",
+      content: message.content,
+    }));
 
     try {
       const response = await this.agent.sendMessage({
@@ -91,7 +94,7 @@ export class AiChatManager {
         id: `${Date.now().toString(36)}-assistant-error`,
         role: "assistant",
         content: error instanceof Error ? error.message : String(error),
-        provider: `${this.getDisplayName()} (error)` ,
+        provider: `${this.getDisplayName()} (error)`,
         timestamp: new Date(),
       };
       this.messages.push(assistantEntry);

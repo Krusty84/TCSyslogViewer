@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
+ */
+
 import * as vscode from "vscode";
 import { parseTeamcenterLog } from "../parse/tcServerSyslogParser.js";
 
@@ -80,7 +85,7 @@ export class SyslogController {
     this.favoritesManager = new FavoritesManager(
       this,
       context,
-      sidebar?.favorites
+      sidebar?.favorites,
     );
 
     const occurrencesView = panel?.occurrences;
@@ -93,7 +98,7 @@ export class SyslogController {
         "tcSyslogViewerOccurrences",
         {
           treeDataProvider: this.occurrencesDataProvider,
-        }
+        },
       );
       this.context.subscriptions.push(this.occurrencesView);
     }
@@ -114,7 +119,7 @@ export class SyslogController {
         return;
       }
       const document = vscode.workspace.textDocuments.find(
-        (doc) => doc.uri.toString() === this.currentUri.toString()
+        (doc) => doc.uri.toString() === this.currentUri.toString(),
       );
       if (document) {
         this.applyDecorations(document, this.latestParsed);
@@ -131,7 +136,7 @@ export class SyslogController {
       vscode.window.onDidChangeActiveColorTheme(() => {
         this.reloadDecorationTypes();
         reapplyCurrentDecorations();
-      })
+      }),
     );
   }
 
@@ -139,17 +144,17 @@ export class SyslogController {
     // Subscribe to VS Code workspace/editor events so the controller stays in sync with the UI.
     this.context.subscriptions.push(
       vscode.window.onDidChangeActiveTextEditor((editor) =>
-        this.handleActiveEditorChange(editor)
+        this.handleActiveEditorChange(editor),
       ),
       vscode.workspace.onDidOpenTextDocument((document) =>
-        this.handleDocumentOpened(document)
+        this.handleDocumentOpened(document),
       ),
       vscode.workspace.onDidCloseTextDocument((document) =>
-        this.handleDocumentClosed(document)
+        this.handleDocumentClosed(document),
       ),
       vscode.workspace.onDidChangeTextDocument((event) =>
-        this.handleDocumentChanged(event)
-      )
+        this.handleDocumentChanged(event),
+      ),
     );
     this.refreshActive();
   }
@@ -319,12 +324,12 @@ export class SyslogController {
       let fgValue = resolveLevelColor(
         configKey,
         "fg",
-        levelDefaults[level]?.fg
+        levelDefaults[level]?.fg,
       );
       let bgValue = resolveLevelColor(
         configKey,
         "bg",
-        levelDefaults[level]?.bg
+        levelDefaults[level]?.bg,
       );
       if (!fgValue && configKey !== level) {
         fgValue = resolveLevelColor(level, "fg", levelDefaults[level]?.fg);
@@ -344,7 +349,7 @@ export class SyslogController {
       applyFontOptions(tokenOptions);
       this.levelDecorationTypes.set(
         level,
-        vscode.window.createTextEditorDecorationType(tokenOptions)
+        vscode.window.createTextEditorDecorationType(tokenOptions),
       );
 
       if (backgroundColor) {
@@ -354,7 +359,7 @@ export class SyslogController {
             backgroundColor,
             isWholeLine: true,
             rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
-          })
+          }),
         );
       }
     }
@@ -386,7 +391,7 @@ export class SyslogController {
 
     const timestampColor = resolveColorSetting(
       config.get("colors.timestamp.fg"),
-      tokenDefaults.timestamp
+      tokenDefaults.timestamp,
     );
     const timestampOptions = {
       color: timestampColor,
@@ -398,7 +403,7 @@ export class SyslogController {
 
     const idColor = resolveColorSetting(
       config.get("colors.id.fg"),
-      tokenDefaults.id
+      tokenDefaults.id,
     );
     const idOptions = {
       color: idColor,
@@ -410,7 +415,7 @@ export class SyslogController {
 
     const messageColor = resolveColorSetting(
       config.get("colors.message.fg"),
-      tokenDefaults.message
+      tokenDefaults.message,
     );
     const messageOptions = {
       color: messageColor,
@@ -422,19 +427,19 @@ export class SyslogController {
 
     const sqlInlineBackground = resolveColorSetting(
       config.get("colors.sql.inline.background"),
-      tokenDefaults.sqlInlineBackground
+      tokenDefaults.sqlInlineBackground,
     );
     this.inlineSqlDecorationType = vscode.window.createTextEditorDecorationType(
       {
         backgroundColor: sqlInlineBackground,
         isWholeLine: true,
         rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
-      }
+      },
     );
 
     const sqlBackground = resolveColorSetting(
       config.get("colors.sql.background"),
-      tokenDefaults.sqlBackground
+      tokenDefaults.sqlBackground,
     );
     this.sqlDecorationType = vscode.window.createTextEditorDecorationType({
       backgroundColor: sqlBackground,
@@ -444,7 +449,7 @@ export class SyslogController {
 
     const journalBackground = resolveColorSetting(
       config.get("colors.journal.background"),
-      tokenDefaults.journalBackground
+      tokenDefaults.journalBackground,
     );
     this.journalDecorationType = vscode.window.createTextEditorDecorationType({
       backgroundColor: journalBackground,
@@ -455,7 +460,7 @@ export class SyslogController {
     const hierarchyBackground =
       resolveColorSetting(
         config.get("colors.journal.hierarchy.background"),
-        tokenDefaults.hierarchyBackground ?? journalBackground
+        tokenDefaults.hierarchyBackground ?? journalBackground,
       ) ?? journalBackground;
     this.hierarchyTraceDecorationType =
       vscode.window.createTextEditorDecorationType({
@@ -466,7 +471,7 @@ export class SyslogController {
 
     const accessBackground = resolveColorSetting(
       config.get("colors.access.background"),
-      tokenDefaults.accessBackground
+      tokenDefaults.accessBackground,
     );
     this.accessCheckDecorationType =
       vscode.window.createTextEditorDecorationType({
@@ -477,7 +482,7 @@ export class SyslogController {
 
     const workflowBackground = resolveColorSetting(
       config.get("colors.workflow.background"),
-      tokenDefaults.workflowBackground
+      tokenDefaults.workflowBackground,
     );
     this.workflowHandlerDecorationType =
       vscode.window.createTextEditorDecorationType({
@@ -570,7 +575,7 @@ export class SyslogController {
   applyDecorations(document, parsed) {
     const target = document.uri.toString();
     const editors = vscode.window.visibleTextEditors.filter(
-      (editor) => editor.document.uri.toString() === target
+      (editor) => editor.document.uri.toString() === target,
     );
     if (!editors.length) {
       return;
@@ -609,8 +614,8 @@ export class SyslogController {
             lineNumber,
             Math.max(0, levelStart),
             lineNumber,
-            Math.max(0, levelEnd)
-          )
+            Math.max(0, levelEnd),
+          ),
         );
       }
       const backgroundRanges = levelBackgroundRanges.get(entry.level);
@@ -624,8 +629,8 @@ export class SyslogController {
             lineNumber,
             Math.max(0, entry.timestampStart),
             lineNumber,
-            Math.max(0, entry.timestampEnd)
-          )
+            Math.max(0, entry.timestampEnd),
+          ),
         );
       }
       if (entry.idStart != null && entry.idEnd != null) {
@@ -634,8 +639,8 @@ export class SyslogController {
             lineNumber,
             Math.max(0, entry.idStart),
             lineNumber,
-            Math.max(0, entry.idEnd)
-          )
+            Math.max(0, entry.idEnd),
+          ),
         );
       }
       if (entry.messageStart != null && entry.messageEnd != null) {
@@ -643,7 +648,7 @@ export class SyslogController {
           lineNumber,
           Math.max(0, entry.messageStart),
           lineNumber,
-          Math.max(0, entry.messageEnd)
+          Math.max(0, entry.messageEnd),
         );
         messageRanges.push(range);
         if (entry.isInlineSql) {
@@ -651,7 +656,12 @@ export class SyslogController {
             parsed.lines?.[lineNumber]?.length ??
             Math.max(0, entry.messageEnd ?? entry.messageStart ?? 0);
           inlineSqlRanges.push(
-            new vscode.Range(lineNumber, 0, lineNumber, Math.max(0, lineLength))
+            new vscode.Range(
+              lineNumber,
+              0,
+              lineNumber,
+              Math.max(0, lineLength),
+            ),
           );
           inlineSqlLinesSeen.add(lineNumber);
         }
@@ -666,7 +676,7 @@ export class SyslogController {
       const lineLength =
         parsed.lines?.[lineIndex]?.length ?? inlineEntry.text?.length ?? 0;
       inlineSqlRanges.push(
-        new vscode.Range(lineIndex, 0, lineIndex, Math.max(0, lineLength))
+        new vscode.Range(lineIndex, 0, lineIndex, Math.max(0, lineLength)),
       );
       inlineSqlLinesSeen.add(lineIndex);
     }
@@ -682,8 +692,8 @@ export class SyslogController {
           normalizedStart,
           0,
           normalizedEnd,
-          Math.max(0, endLineLength)
-        )
+          Math.max(0, endLineLength),
+        ),
       );
     }
 
@@ -698,8 +708,8 @@ export class SyslogController {
           normalizedStart,
           0,
           normalizedEnd,
-          Math.max(0, endLineLength)
-        )
+          Math.max(0, endLineLength),
+        ),
       );
     }
 
@@ -714,8 +724,8 @@ export class SyslogController {
           normalizedStart,
           0,
           normalizedEnd,
-          Math.max(0, endLineLength)
-        )
+          Math.max(0, endLineLength),
+        ),
       );
     }
 
@@ -724,7 +734,12 @@ export class SyslogController {
       const normalizedLine = Math.max(0, lineIndex);
       const length = parsed.lines?.[normalizedLine]?.length ?? 0;
       accessRanges.push(
-        new vscode.Range(normalizedLine, 0, normalizedLine, Math.max(0, length))
+        new vscode.Range(
+          normalizedLine,
+          0,
+          normalizedLine,
+          Math.max(0, length),
+        ),
       );
     }
 
@@ -732,16 +747,16 @@ export class SyslogController {
       const startLine = Math.max(0, handler.line ?? 0);
       const endLine = Math.max(
         startLine,
-        handler.endLine ?? handler.line ?? startLine
+        handler.endLine ?? handler.line ?? startLine,
       );
       const startLength = parsed.lines?.[startLine]?.length ?? 0;
       workflowRanges.push(
-        new vscode.Range(startLine, 0, startLine, Math.max(0, startLength))
+        new vscode.Range(startLine, 0, startLine, Math.max(0, startLength)),
       );
       if (endLine !== startLine) {
         const endLength = parsed.lines?.[endLine]?.length ?? 0;
         workflowRanges.push(
-          new vscode.Range(endLine, 0, endLine, Math.max(0, endLength))
+          new vscode.Range(endLine, 0, endLine, Math.max(0, endLength)),
         );
       }
     }
@@ -766,8 +781,8 @@ export class SyslogController {
             lineIndex,
             keyStart,
             lineIndex,
-            Math.max(keyStart, keyEnd)
-          )
+            Math.max(keyStart, keyEnd),
+          ),
         );
         const equalsIndex = lineText.indexOf("=");
         if (equalsIndex !== -1) {
@@ -780,8 +795,8 @@ export class SyslogController {
               lineIndex,
               valueStart,
               lineIndex,
-              Math.max(valueStart, lineText.length)
-            )
+              Math.max(valueStart, lineText.length),
+            ),
           );
         }
       }
@@ -794,7 +809,7 @@ export class SyslogController {
       for (const [level, decoration] of this.levelBackgroundDecorationTypes) {
         editor.setDecorations(
           decoration,
-          levelBackgroundRanges.get(level) ?? []
+          levelBackgroundRanges.get(level) ?? [],
         );
       }
       if (this.timestampDecorationType) {
@@ -827,7 +842,7 @@ export class SyslogController {
       if (this.hierarchyTraceDecorationType) {
         editor.setDecorations(
           this.hierarchyTraceDecorationType,
-          hierarchyRanges
+          hierarchyRanges,
         );
       }
       if (this.accessCheckDecorationType) {
@@ -836,7 +851,7 @@ export class SyslogController {
       if (this.workflowHandlerDecorationType) {
         editor.setDecorations(
           this.workflowHandlerDecorationType,
-          workflowRanges
+          workflowRanges,
         );
       }
       if (this.baseFontDecorationType) {
@@ -859,7 +874,7 @@ export class SyslogController {
       return;
     }
     const editors = vscode.window.visibleTextEditors.filter(
-      (editor) => editor.document.uri.toString() === uriString
+      (editor) => editor.document.uri.toString() === uriString,
     );
     if (!editors.length) {
       return;
@@ -1021,7 +1036,7 @@ export class SyslogController {
       this.clearDecorations(document.uri.toString());
       this.latestParsed = null;
       vscode.window.showErrorMessage(
-        `TC Syslog: unable to parse file - ${message}`
+        `TC Syslog: unable to parse file - ${message}`,
       );
       return;
     }
@@ -1030,10 +1045,10 @@ export class SyslogController {
     const model = buildTreeModel(parsed, document.uri);
     const basicIds = new Set(["root:overview", "root:levels"]);
     const basicNodes = (model.nodes ?? []).filter((node) =>
-      basicIds.has(node.id)
+      basicIds.has(node.id),
     );
     const extraNodes = (model.nodes ?? []).filter(
-      (node) => !basicIds.has(node.id)
+      (node) => !basicIds.has(node.id),
     );
     this.treeDataProvider.setModel({
       resource: model.resource,
@@ -1058,8 +1073,8 @@ export class SyslogController {
     const startLine = hasLine
       ? line
       : typeof selectionRange?.startLine === "number"
-      ? selectionRange.startLine
-      : selectionRange?.endLine ?? 0;
+        ? selectionRange.startLine
+        : (selectionRange?.endLine ?? 0);
     if (!Number.isFinite(startLine)) {
       return;
     }
@@ -1081,8 +1096,8 @@ export class SyslogController {
           0,
           Math.min(
             Number.isFinite(characterValue) ? characterValue : 0,
-            lineLength
-          )
+            lineLength,
+          ),
         );
         return new vscode.Position(normalizedLine, normalizedChar);
       };
@@ -1090,9 +1105,9 @@ export class SyslogController {
         ? new vscode.Selection(
             makePosition(
               selectionRange.startLine,
-              selectionRange.startCharacter
+              selectionRange.startCharacter,
             ),
-            makePosition(selectionRange.endLine, selectionRange.endCharacter)
+            makePosition(selectionRange.endLine, selectionRange.endCharacter),
           )
         : (() => {
             const position = makePosition(startLine, 0);
@@ -1102,13 +1117,13 @@ export class SyslogController {
       const revealRange = new vscode.Range(selection.start, selection.end);
       editor.revealRange(
         revealRange,
-        vscode.TextEditorRevealType.InCenterIfOutsideViewport
+        vscode.TextEditorRevealType.InCenterIfOutsideViewport,
       );
     } catch (error) {
       vscode.window.showErrorMessage(
         `Failed to reveal log line: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }
@@ -1131,7 +1146,7 @@ export class SyslogController {
   ensureParsedModel() {
     if (!this.latestParsed || !this.currentUri) {
       vscode.window.showWarningMessage(
-        "TC Syslog: no parsed data is available to copy"
+        "TC Syslog: no parsed data is available to copy",
       );
       return null;
     }
@@ -1142,7 +1157,7 @@ export class SyslogController {
     const target = this.resolveNodeForCommand(node);
     if (!target) {
       vscode.window.showInformationMessage(
-        "TC Syslog: select a category in the explorer to copy"
+        "TC Syslog: select a category in the explorer to copy",
       );
       return;
     }
@@ -1160,7 +1175,7 @@ export class SyslogController {
     });
     if (!entries.length) {
       vscode.window.showInformationMessage(
-        "TC Syslog: nothing to copy for this category"
+        "TC Syslog: nothing to copy for this category",
       );
       return;
     }
@@ -1177,7 +1192,7 @@ export class SyslogController {
     const target = this.resolveNodeForCommand(node);
     if (!target) {
       vscode.window.showInformationMessage(
-        "TC Syslog: select an entry to copy"
+        "TC Syslog: select an entry to copy",
       );
       return;
     }
@@ -1195,7 +1210,7 @@ export class SyslogController {
     });
     if (!entries.length) {
       vscode.window.showInformationMessage(
-        "TC Syslog: nothing to copy for this entry"
+        "TC Syslog: nothing to copy for this entry",
       );
       return;
     }
@@ -1211,14 +1226,14 @@ export class SyslogController {
   async addFavorite(node) {
     if (!this.currentUri) {
       vscode.window.showInformationMessage(
-        "TC Syslog: open a syslog file before adding favorites."
+        "TC Syslog: open a syslog file before adding favorites.",
       );
       return;
     }
     const document = await this.getCurrentDocument();
     if (!document) {
       vscode.window.showWarningMessage(
-        "TC Syslog: unable to load the active syslog document."
+        "TC Syslog: unable to load the active syslog document.",
       );
       return;
     }
@@ -1322,7 +1337,7 @@ export class SyslogController {
       return null;
     }
     const existing = vscode.workspace.textDocuments.find(
-      (doc) => doc.uri.toString() === this.currentUri.toString()
+      (doc) => doc.uri.toString() === this.currentUri.toString(),
     );
     if (existing) {
       return existing;
@@ -1333,7 +1348,7 @@ export class SyslogController {
       vscode.window.showWarningMessage(
         `TC Syslog: unable to open document - ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
     return null;
@@ -1349,7 +1364,7 @@ export class SyslogController {
     const { matches, truncated } = this.collectOccurrencesMatches(
       document,
       haystack,
-      needle
+      needle,
     );
 
     if (!matches.length) {
@@ -1368,13 +1383,13 @@ export class SyslogController {
       this.occurrencesView.message = truncated
         ? `Showing first ${matches.length} occurrences for "${truncate(
             needle,
-            60
+            60,
           )}".`
         : undefined;
     }
 
     await vscode.commands.executeCommand(
-      "workbench.view.extension.tcSyslogViewerCenterBottomPanel"
+      "workbench.view.extension.tcSyslogViewerCenterBottomPanel",
     );
     if (this.occurrencesView) {
       try {
@@ -1410,7 +1425,7 @@ export class SyslogController {
     const { matches, truncated } = this.collectOccurrencesMatches(
       document,
       haystack,
-      needle
+      needle,
     );
 
     if (!matches.length) {
@@ -1428,7 +1443,7 @@ export class SyslogController {
       this.occurrencesView.message = truncated
         ? `Showing first ${matches.length} occurrences for "${truncate(
             needle,
-            60
+            60,
           )}".`
         : undefined;
     }
@@ -1452,14 +1467,14 @@ export class SyslogController {
       },
       async () => {
         await this.sendAiChatMessage(question);
-      }
+      },
     );
   }
 
   async sendAiChatMessage(question) {
     if (!this.aiChatManager) {
       vscode.window.showWarningMessage(
-        "TC Syslog AI is not available in this workspace."
+        "TC Syslog AI is not available in this workspace.",
       );
       return null;
     }
@@ -1468,7 +1483,7 @@ export class SyslogController {
       : vscode.window.activeTextEditor?.document;
     if (!document || !isSyslogDocument(document)) {
       vscode.window.showInformationMessage(
-        "TC Syslog AI: open a Teamcenter syslog file first."
+        "TC Syslog AI: open a Teamcenter syslog file first.",
       );
       return null;
     }
@@ -1487,7 +1502,9 @@ export class SyslogController {
       return result;
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : String(error ?? "Unknown error");
+        error instanceof Error
+          ? error.message
+          : String(error ?? "Unknown error");
       vscode.window.showErrorMessage(`TC Syslog AI: ${message}`);
       return null;
     }
@@ -1513,7 +1530,7 @@ export class SyslogController {
     const editor = vscode.window.activeTextEditor;
     if (!editor || !isSyslogDocument(editor.document)) {
       vscode.window.showInformationMessage(
-        "TC Syslog: open a Teamcenter syslog file and select text to search."
+        "TC Syslog: open a Teamcenter syslog file and select text to search.",
       );
       return null;
     }
@@ -1524,7 +1541,7 @@ export class SyslogController {
     const needle = selectedText.trim();
     if (!needle) {
       vscode.window.showInformationMessage(
-        "TC Syslog: select some text before running Find All Occurrences."
+        "TC Syslog: select some text before running Find All Occurrences.",
       );
       return null;
     }
@@ -1574,12 +1591,12 @@ export class SyslogController {
 
   handleNoOccurrencesFound(needle) {
     vscode.window.showInformationMessage(
-      `TC Syslog: no occurrences of "${truncate(needle, 80)}" found.`
+      `TC Syslog: no occurrences of "${truncate(needle, 80)}" found.`,
     );
     if (this.occurrencesView && !this.occurrencesDataProvider.hasSessions()) {
       this.occurrencesView.message = `No occurrences found for "${truncate(
         needle,
-        60
+        60,
       )}".`;
     }
   }
@@ -1605,7 +1622,7 @@ export class SyslogController {
         const highlighted = highlightMatchInLine(
           match.text ?? "",
           match.column,
-          match.length
+          match.length,
         );
         const location = `${absolutePath}:${lineNumber}:${columnNumber}`;
         return `${
@@ -1626,19 +1643,18 @@ export class SyslogController {
       document,
       needle,
       matches,
-      truncated
+      truncated,
     );
     const sanitizedQuery = sanitizeForUntitledLabel(needle);
     const label = truncate(sanitizedQuery, 32) || "query";
     const untitledUri = vscode.Uri.parse(
-      `untitled:Occurrences-${label}-${Date.now()}.txt`
+      `untitled:Occurrences-${label}-${Date.now()}.txt`,
     );
     let uriKey;
 
     try {
-      const targetDocument = await vscode.workspace.openTextDocument(
-        untitledUri
-      );
+      const targetDocument =
+        await vscode.workspace.openTextDocument(untitledUri);
       uriKey = targetDocument.uri.toString();
       this.previewDocuments.add(uriKey);
       const editor = await vscode.window.showTextDocument(targetDocument, {
@@ -1655,7 +1671,7 @@ export class SyslogController {
         editor.revealRange(new vscode.Range(start, start));
       } else {
         vscode.window.showWarningMessage(
-          "TC Syslog: unable to populate occurrences document."
+          "TC Syslog: unable to populate occurrences document.",
         );
         this.previewDocuments.delete(uriKey);
       }
@@ -1666,7 +1682,7 @@ export class SyslogController {
       vscode.window.showErrorMessage(
         `TC Syslog: unable to open occurrences document - ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }
@@ -1675,7 +1691,7 @@ export class SyslogController {
     const sessionId =
       typeof node === "string"
         ? node
-        : node?.sessionId ?? node?.id?.replace(/^occurrences:session:/, "");
+        : (node?.sessionId ?? node?.id?.replace(/^occurrences:session:/, ""));
     if (!sessionId) {
       return;
     }
@@ -1710,7 +1726,7 @@ export class SyslogController {
       : [];
     if (!normalizedEntries.length) {
       vscode.window.showInformationMessage(
-        "TC Syslog: nothing to display in preview."
+        "TC Syslog: nothing to display in preview.",
       );
       return;
     }
@@ -1795,7 +1811,7 @@ export class SyslogController {
       });
       if (!success) {
         vscode.window.showWarningMessage(
-          "TC Syslog: unable to open preview editor."
+          "TC Syslog: unable to open preview editor.",
         );
         this.previewDocuments.delete(uriKey);
         return;
@@ -1817,7 +1833,7 @@ export class SyslogController {
       vscode.window.showErrorMessage(
         `TC Syslog: unable to open preview editor - ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }

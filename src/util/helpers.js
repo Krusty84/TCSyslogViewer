@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
+ */
+
 import path from "node:path";
 
 /**
@@ -31,7 +36,7 @@ export function highlightMatchInLine(lineText, column, length) {
   }
   return `${lineText.slice(0, start)}[${lineText.slice(
     start,
-    end
+    end,
   )}]${lineText.slice(end)}`;
 }
 

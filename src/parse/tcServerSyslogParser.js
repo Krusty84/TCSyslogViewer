@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
+ */
+
 import antlr4 from "antlr4";
 import TeamcenterLogLexer from "./antlr/generated/tcServerSyslogGrammarLexer.js";
 import TeamcenterLogParser from "./antlr/generated/tcServerSyslogGrammarParser.js";
@@ -586,7 +591,7 @@ function collectLogLines(lines) {
     const messageRawIndex = messageValue
       ? lineText.indexOf(
           messageRaw,
-          idRawIndex >= 0 ? idRawIndex + idRaw.length : timestampEnd ?? 0
+          idRawIndex >= 0 ? idRawIndex + idRaw.length : (timestampEnd ?? 0),
         )
       : -1;
     const messageLeadingSpaces =
@@ -634,7 +639,7 @@ export function parseTeamcenterLog(content) {
   const heuristicSql = collectSqlSections(lines);
   if (Array.isArray(result.sqlDumps) && result.sqlDumps.length) {
     const heuristicsByLine = new Map(
-      heuristicSql.map((section) => [section.line, section])
+      heuristicSql.map((section) => [section.line, section]),
     );
     const merged = result.sqlDumps.map((section) => {
       const fallback = heuristicsByLine.get(section.line);
@@ -671,7 +676,7 @@ export function parseTeamcenterLog(content) {
     }
   }
   const heuristicInline = collectInlineSqlLines(lines).filter(
-    (item) => !inlineLogSet.has(item.line)
+    (item) => !inlineLogSet.has(item.line),
   );
   result.inlineSqlLines = [
     ...(inlineLogSet.size

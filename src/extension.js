@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
+ */
+
 import { SyslogController } from "./core/syslogController.js";
 import { registerUserCommands } from "./ui/general/userInteractions.js";
 import { leftSidePanel } from "./ui/panels/leftSidePanel/leftSidePanel.js";

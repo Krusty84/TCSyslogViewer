@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
+ */
+
 import { truncate } from "../util/helpers.js";
 
 function sanitizeContext(context) {
@@ -49,7 +54,11 @@ function extractContextByToken(lines, token, maxMatches = 20) {
   }
   const needle = token.trim();
   const results = [];
-  for (let index = 0; index < lines.length && results.length < maxMatches; index += 1) {
+  for (
+    let index = 0;
+    index < lines.length && results.length < maxMatches;
+    index += 1
+  ) {
     if (lines[index].includes(needle)) {
       results.push({ line: index + 1, text: lines[index] });
     }
@@ -75,8 +84,14 @@ export function createSyslogToolbox(getContext) {
       parameters: {
         type: "object",
         properties: {
-          startLine: { type: "number", description: "1-based inclusive start line" },
-          endLine: { type: "number", description: "1-based exclusive end line" },
+          startLine: {
+            type: "number",
+            description: "1-based inclusive start line",
+          },
+          endLine: {
+            type: "number",
+            description: "1-based exclusive end line",
+          },
         },
         required: [],
       },
@@ -87,7 +102,11 @@ export function createSyslogToolbox(getContext) {
       parameters: {
         type: "object",
         properties: {
-          limit: { type: "number", description: "Maximum number of entries", default: 5 },
+          limit: {
+            type: "number",
+            description: "Maximum number of entries",
+            default: 5,
+          },
         },
         required: [],
       },
@@ -124,7 +143,9 @@ export function createSyslogToolbox(getContext) {
       const lines = getLines(context.text);
       const zeroBasedStart = Math.max(0, Math.round(startLine) - 1);
       const zeroBasedEnd =
-        endLine === undefined ? lines.length : Math.max(zeroBasedStart, Math.round(endLine) - 1);
+        endLine === undefined
+          ? lines.length
+          : Math.max(zeroBasedStart, Math.round(endLine) - 1);
       const window = sliceWindow(lines, zeroBasedStart, zeroBasedEnd);
       return {
         type: "window",
@@ -138,7 +159,10 @@ export function createSyslogToolbox(getContext) {
       const lines = getLines(context.text);
       return {
         type: "recentErrors",
-        entries: findRecentErrors(lines, Math.max(1, Math.min(50, Math.round(limit)))),
+        entries: findRecentErrors(
+          lines,
+          Math.max(1, Math.min(50, Math.round(limit))),
+        ),
       };
     },
     find_token_occurrences: async ({ token, limit = 20 }) => {
@@ -147,7 +171,11 @@ export function createSyslogToolbox(getContext) {
       return {
         type: "tokenOccurrences",
         token,
-        entries: extractContextByToken(lines, token, Math.max(1, Math.min(100, Math.round(limit)))),
+        entries: extractContextByToken(
+          lines,
+          token,
+          Math.max(1, Math.min(100, Math.round(limit))),
+        ),
       };
     },
   };

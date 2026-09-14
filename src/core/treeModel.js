@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
+ */
+
 import { NODE_CONTEXT, LEVEL_ICONS, LEVEL_ORDER } from "../util/constants.js";
 import { truncate, winBasename, levelRank } from "../util/helpers.js";
 
@@ -252,7 +257,7 @@ export function buildTreeModel(parsed, resource) {
           const percentLabel = row.percent ? `${row.percent}%` : "";
           const functionLabel = truncate(
             row.functionName ?? `Entry ${rowIndex + 1}`,
-            80
+            80,
           );
           const details = [];
           if (row.totalElapsed) {
@@ -297,7 +302,7 @@ export function buildTreeModel(parsed, resource) {
           clipboardLines: sectionLines,
           contextValue: NODE_CONTEXT.GROUP,
         };
-      }
+      },
     );
     journalNodes.push(...sectionNodes);
   }
@@ -392,7 +397,7 @@ export function buildTreeModel(parsed, resource) {
       const startLine = Math.max(0, entry.line ?? 0);
       const endLine = Math.max(
         startLine,
-        entry.endLine ?? entry.line ?? startLine
+        entry.endLine ?? entry.line ?? startLine,
       );
       const description =
         endLine === startLine
@@ -482,7 +487,7 @@ export function buildTreeModel(parsed, resource) {
       id: `inlineSql:${index}:${entry.line}`,
       label: truncate(
         (entry.text ?? "").trim() || `SQL Statement ${index + 1}`,
-        80
+        80,
       ),
       description:
         isValidLine(entry.line) && entry.line !== undefined

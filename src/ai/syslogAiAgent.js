@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
+ */
+
 import { getAiConfiguration } from "./agentConfig.js";
 import { createSyslogToolbox } from "./tools.js";
 
@@ -37,7 +42,7 @@ function normalizeContent(content) {
   }
   if (Array.isArray(content)) {
     return content
-      .map((entry) => (typeof entry === "string" ? entry : entry?.text ?? ""))
+      .map((entry) => (typeof entry === "string" ? entry : (entry?.text ?? "")))
       .join("\n");
   }
   if (typeof content === "object") {
@@ -63,16 +68,16 @@ export class SyslogAiAgent {
 
   refreshConfiguration() {
     this.config = getAiConfiguration();
-    const provider = PROVIDERS.get(this.config.provider) ?? PROVIDERS.get("deepseek");
+    const provider =
+      PROVIDERS.get(this.config.provider) ?? PROVIDERS.get("deepseek");
     this.provider = provider;
     this.model = this.config.model || provider.defaultModel;
     this.requiresKey = provider.requiresKey !== false;
   }
 
   getDisplayName() {
-    const providerLabel = (this.config.provider ?? "LLM").replace(
-      /^\w/,
-      (ch) => ch.toUpperCase()
+    const providerLabel = (this.config.provider ?? "LLM").replace(/^\w/, (ch) =>
+      ch.toUpperCase(),
     );
     return `${providerLabel}: ${this.model}`;
   }
@@ -105,7 +110,9 @@ export class SyslogAiAgent {
         role: "user",
         content: [
           userMessage.trim(),
-          selectionContext ? `Relevant selection:\n${selectionContext}` : undefined,
+          selectionContext
+            ? `Relevant selection:\n${selectionContext}`
+            : undefined,
           `Document excerpt:\n${sample}`,
         ]
           .filter(Boolean)
@@ -170,7 +177,9 @@ export class SyslogAiAgent {
 
   async callModel(messages, tools) {
     if (this.requiresKey && !this.config.apiKey) {
-      throw new Error("AI API key is not configured. Update tcSyslogViewer.ai.apiKey in settings.");
+      throw new Error(
+        "AI API key is not configured. Update tcSyslogViewer.ai.apiKey in settings.",
+      );
     }
     const body = {
       model: this.model,
@@ -182,7 +191,9 @@ export class SyslogAiAgent {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(this.config.apiKey ? { Authorization: `Bearer ${this.config.apiKey}` } : {}),
+        ...(this.config.apiKey
+          ? { Authorization: `Bearer ${this.config.apiKey}` }
+          : {}),
       },
       body: JSON.stringify(body),
     });
@@ -197,5 +208,4 @@ export class SyslogAiAgent {
     }
     return message;
   }
-
 }

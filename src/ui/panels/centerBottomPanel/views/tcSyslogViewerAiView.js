@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
+ */
+
 import * as vscode from "vscode";
 
 class AiChatWebviewProvider {
@@ -31,7 +36,7 @@ class AiChatWebviewProvider {
         if (message?.type === "ask") {
           await this.handleAsk(message.text ?? "");
         }
-      })
+      }),
     );
 
     const subscription = this.controller.onAiChatChanged?.(() => {
@@ -49,14 +54,14 @@ class AiChatWebviewProvider {
             this.postStatus(this.lastStatusMessage);
           }
         }
-      })
+      }),
     );
 
     disposables.push(
       webviewView.onDidDispose(() => {
         this.disposable?.dispose();
         this.disposable = undefined;
-      })
+      }),
     );
 
     this.disposable = vscode.Disposable.from(...disposables);
@@ -123,7 +128,7 @@ class AiChatWebviewProvider {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
     const headerLabel = `LLM: ${escapeHtml(providerValue)}, Model: ${escapeHtml(
-      modelValue
+      modelValue,
     )}`;
     const infoJson = JSON.stringify({
       provider: providerValue,
@@ -501,7 +506,7 @@ export function registerAiChatView(context, controller) {
   const provider = new AiChatWebviewProvider(controller);
   const registration = vscode.window.registerWebviewViewProvider(
     "tcSyslogViewerAiInsights",
-    provider
+    provider,
   );
   context.subscriptions.push(registration);
 }

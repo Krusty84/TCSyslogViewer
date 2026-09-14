@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
+ */
+
 import { leftSidePanelCommands } from "../panels/leftSidePanel/interactions/leftSidePanelCommands.js";
 import { tcSyslogViewerExtraViewCommands } from "../panels/leftSidePanel/interactions/tcSyslogViewerExtraViewCommands.js";
 import { centerBottomPanelCommands } from "../panels/centerBottomPanel/interactions/centerBottomPanelCommands.js";

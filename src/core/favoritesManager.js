@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
+ */
+
 import * as vscode from "vscode";
 import path from "node:path";
 import { TextDecoder, TextEncoder } from "node:util";
@@ -211,8 +216,8 @@ export class FavoritesManager {
       typeof favorite.line === "number"
         ? `Line ${favorite.line + 1}`
         : favorite.range?.start?.line !== undefined
-        ? `Line ${(favorite.range.start.line ?? 0) + 1}`
-        : favorite.range?.start?.line ?? 0;
+          ? `Line ${(favorite.range.start.line ?? 0) + 1}`
+          : (favorite.range?.start?.line ?? 0);
     return {
       id: favorite.id,
       label: displayLabel,
@@ -224,7 +229,7 @@ export class FavoritesManager {
       line:
         typeof favorite.line === "number"
           ? favorite.line
-          : favorite.range?.start?.line ?? null,
+          : (favorite.range?.start?.line ?? null),
       command: {
         command: "tcSyslogViewer.openFavorite",
         title: "Open Favorite",
@@ -236,7 +241,7 @@ export class FavoritesManager {
   async addFavorite(payload) {
     if (!this.currentResource) {
       vscode.window.showWarningMessage(
-        "TC Syslog: open a syslog file before adding favorites."
+        "TC Syslog: open a syslog file before adding favorites.",
       );
       return;
     }
@@ -260,7 +265,7 @@ export class FavoritesManager {
     this.refreshTree();
     vscode.window.setStatusBarMessage(
       "TC Syslog: added entry to favorites",
-      2500
+      2500,
     );
   }
 
@@ -282,7 +287,7 @@ export class FavoritesManager {
     const favorite = this.entryMap.get(node.favoriteId);
     if (!favorite) {
       vscode.window.showWarningMessage(
-        "TC Syslog: unable to locate favorite entry."
+        "TC Syslog: unable to locate favorite entry.",
       );
       return;
     }
@@ -325,7 +330,7 @@ export class FavoritesManager {
     const favorite = this.entryMap.get(favoriteId);
     if (!favorite) {
       vscode.window.showWarningMessage(
-        "TC Syslog: favorite entry no longer exists."
+        "TC Syslog: favorite entry no longer exists.",
       );
       return;
     }
@@ -335,7 +340,7 @@ export class FavoritesManager {
     const targetLine =
       typeof favorite.line === "number"
         ? favorite.line
-        : favorite.range?.start?.line ?? 0;
+        : (favorite.range?.start?.line ?? 0);
     const range = favorite.range
       ? {
           startLine: favorite.range.start?.line ?? targetLine,

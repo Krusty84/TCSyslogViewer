@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 Alexey Sedoykin
+ * SPDX-License-Identifier: MIT
+ */
+
 import { tcSyslogViewerBasicView } from "./views/tcSyslogViewerBasicView.js";
 import { tcSyslogViewerExtraView } from "./views/tcSyslogViewerExtraView.js";
 import { tcSyslogViewerFavoritesView } from "./views/tcSyslogViewerFavoritesView.js";
